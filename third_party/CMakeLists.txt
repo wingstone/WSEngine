@@ -1,0 +1,12 @@
+cmake_minimum_required(VERSION 3.11...3.16)
+
+# add_subdirectory(${EXTERNAL}/bullet/wse)
+# add_subdirectory(${EXTERNAL}/glfw/wse)
+# add_subdirectory(${EXTERNAL}/assimp/wse)
+# add_subdirectory(${EXTERNAL}/std/wse)
+# add_subdirectory(${EXTERNAL}/imgui/wse)
+# add_subdirectory(${EXTERNAL}/tinyexr/wse)
+add_subdirectory(assimp)
+add_subdirectory(glad)
+add_subdirectory(GLFW)
+add_subdirectory(glm)

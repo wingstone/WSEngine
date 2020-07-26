@@ -31,7 +31,7 @@ float lastTime = 0.0f;
 
 int main()
 {
-	//windowÏà¹Ø³õÊ¼»¯
+	//windowï¿½ï¿½Ø³ï¿½Ê¼ï¿½ï¿½
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -61,9 +61,9 @@ int main()
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	MeshRender meshRender("monkey.fbx");
+	MeshRender meshRender("../../assets/monkey.fbx");
 
-	ShaderClass shader("vert.txt", "frag.txt");
+	ShaderClass shader("../../assets/vert.txt", "../../assets/frag.txt");
 
 	Transform transform;
 
@@ -83,21 +83,21 @@ int main()
 		deltaTime = currentTime - lastTime;
 		lastTime = currentTime;
 
-		//´¦ÀíÊäÈë
+		//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		processInput(window);
 
-		//äÖÈ¾Ö¸Áî
-		//Çå³þÆÁÄ»
+		//ï¿½ï¿½È¾Ö¸ï¿½ï¿½
+		//ï¿½ï¿½ï¿½ï¿½ï¿½Ä»
 		glEnable(GL_DEPTH_TEST);
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		light.lightColor = vec4(1.2f, 0.8f, sin(glfwGetTime() + 8.0f)*0.5f + 0.5f, 1.0f);
 
-		//»æÖÆÖ¸Áî
+		//ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
 		meshRender.DrawModel(&transform, &camera, &mat, &light, &amlight);
 
-		//ÆÁÄ»ÏÔÊ¾
+		//ï¿½ï¿½Ä»ï¿½ï¿½Ê¾
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -149,7 +149,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 
 	float xoffset = (float)xpos - lastX;
 	float yoffset = (float)ypos - lastY;
-	yoffset = -yoffset;					//ÓÉÓÚÆÁÄ»×ø±êÏµÔ­Òò£¬×óÉÏ½ÇÎªÔ­µã
+	yoffset = -yoffset;					//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ÏµÔ­ï¿½ï¿½ï¿½ï¿½ï¿½Ï½ï¿½ÎªÔ­ï¿½ï¿½
 
 	lastX = (float)xpos;
 	lastY = (float)ypos;

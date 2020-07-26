@@ -16,12 +16,13 @@ set(CMAKE_CXX_STANDARD 14)
 #------------------------
 # file setting
 #------------------------
-set(EXTERNAL ${CMAKE_CURRENT_SOURCE_DIR}/third_party)
+
 set(INCLUDE_DIR include)
 set(SRC_DIR src)
 
-file(GLOB INCLUDE_FILES ${INCLUDE_DIR}/*.h)
+file(GLOB INCLUDE_FILES ${SRC_DIR}/*.h)
 file(GLOB SOURCE_FILES ${SRC_DIR}/*.cpp)
+
 
 #------------------------
 # building
@@ -33,8 +34,14 @@ file(GLOB SOURCE_FILES ${SRC_DIR}/*.cpp)
 # add_subdirectory(${EXTERNAL}/imgui/wse)
 # add_subdirectory(${EXTERNAL}/tinyexr/wse)
 
-add_executable(${TARGET} ${INCLUDE_FILES} ${SOURCE_FILES})
-target_include_directories(${TARGET} PUBLIC ${INCLUDE_DIR})
+add_executable(${TARGET} ${INCLUDE_FILES} ${SOURCE_FILES} ${EXTERN_SRC})
+target_link_libraries(${TARGET} opengl32.lib)
+
+#------------------------
+# third setting
+#------------------------\
+set(EXTERNAL third_party)
+add_subdirectory(${EXTERNAL})
 
 #------------------------
 # installing
