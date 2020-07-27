@@ -46,8 +46,8 @@ add_subdirectory(${EXTERNAL})
 #------------------------
 # installing
 #------------------------
-install(TARGETS ${TARGET} DESTINATION bin) # binary
+install(TARGETS ${TARGET} DESTINATION WSEngine/bin) # binary
 
-install(TARGETS ${TARGET} LIBRARY DESTINATION lib) # Library
+install(TARGETS ${TARGET} LIBRARY DESTINATION WSEngine/lib) # Library
 
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include) # Header files
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION WSEngine/include) # Header files
