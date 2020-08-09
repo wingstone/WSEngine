@@ -6,6 +6,10 @@ WSEngine::WSEngine() : renderManager(this), entityManager(this), resourceManager
 	_height = 720;
 	_title = "WSEngine";
 	_window = nullptr;
+	renderTexture = nullptr;
+
+	quadShader = nullptr;
+	quadMesh = nullptr;
 }
 
 WSEngine::~WSEngine()
@@ -55,6 +59,12 @@ bool WSEngine::Init()
 
 	renderManager.SetAmbientColor(vec4(0.4f, 0.4f, 0.4f, 1.0f));
 
+	quadShader = resourceManager.LoadShader("../../assets/quadVert.txt", "../../assets/quadFrag.txt", "quad");
+	vector<Vertex> verts;
+	vector<unsigned int> indes;
+	GeometryGenerator::GenerateQuad(verts, indes);
+	quadMesh = resourceManager.CreateMesh(verts, indes, "quad");
+
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -80,27 +90,49 @@ void WSEngine::Run(UiCallBack uiCallBack)
 	while (!glfwWindowShouldClose(_window))
 	{
 		processInput(_window);
-
 		FPS::Instance().Update();
-		glEnable(GL_DEPTH_TEST);
-		glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		
-		//imgui Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+
+		if (renderTexture != nullptr)
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, renderTexture->framebuffer);
+			glEnable(GL_DEPTH_TEST);
+			glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			if (!renderManager.Render())
+				break;
+
+			//postprocess
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glDisable(GL_DEPTH_TEST);
+			glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			quadShader->use();
+			quadShader->setTexture("screenTexture", renderTexture->textureColorbuffer, 0);
+			quadMesh->DrawMesh();
+		}
+		else
+		{
+			glEnable(GL_DEPTH_TEST);
+			glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+			if (!renderManager.Render())
+				break;
+		}
+
+		//imgui Start
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
 
 		uiCallBack(this);
 
-		//imgui Rendering
-        ImGui::Render();
+		ImGui::Render();
 
-		if (!renderManager.Render())
-			break;
-		
-		//imgui
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		//imgui end
 
 		glfwSwapBuffers(_window);
 		glfwPollEvents();
@@ -122,9 +154,4 @@ void WSEngine::Quit()
 	GlobalLog::Log("entity manager quit complete");
 	resourceManager.Quit();
 	GlobalLog::Log("resource manager quit complete");
-}
-
-void WSEngine::SetUiCallBack(UiCallBack uicallback)
-{
-	_uiCallBack = uicallback;
 }

@@ -1,18 +1,18 @@
-# include <core/ShaderClass.h>
+#include <core/ShaderClass.h>
 
 ShaderClass::ShaderClass()
 {
 	ID = 0;
 }
 
-ShaderClass::ShaderClass(const GLchar* vertContent, const GLchar* fragContent, bool isFilePath)
+ShaderClass::ShaderClass(const GLchar *vertContent, const GLchar *fragContent, bool isFilePath)
 {
 	//读取shader文件
 	string vertexCode;
 	string fragmentCode;
-	const char* vShaderCode;
-	const char* fShaderCode;
-	if ( isFilePath )
+	const char *vShaderCode;
+	const char *fShaderCode;
+	if (isFilePath)
 	{
 
 		ifstream vShaderFile;
@@ -59,7 +59,8 @@ ShaderClass::ShaderClass(const GLchar* vertContent, const GLchar* fragContent, b
 	if (!success)
 	{
 		glGetShaderInfoLog(vertexShader, 512, NULL, infolog);
-		cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infolog << endl;
+		cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+			 << infolog << endl;
 	}
 
 	//片段着色器
@@ -71,7 +72,8 @@ ShaderClass::ShaderClass(const GLchar* vertContent, const GLchar* fragContent, b
 	if (!success)
 	{
 		glGetShaderInfoLog(fragmentShader, 512, NULL, infolog);
-		cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infolog << endl;
+		cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+			 << infolog << endl;
 	}
 
 	//着色器程序
@@ -83,11 +85,11 @@ ShaderClass::ShaderClass(const GLchar* vertContent, const GLchar* fragContent, b
 	if (!success)
 	{
 		glGetShaderInfoLog(ID, 512, NULL, infolog);
-		cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infolog << endl;
+		cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+			 << infolog << endl;
 	}
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
-
 }
 
 ShaderClass::~ShaderClass()
@@ -110,12 +112,12 @@ void ShaderClass::setBool(const string &name, bool value) const
 {
 	glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
 }
-	
+
 void ShaderClass::setInt(const string &name, int value) const
 {
 	glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
-	
+
 void ShaderClass::setFloat(const string &name, float value) const
 {
 	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
@@ -129,4 +131,11 @@ void ShaderClass::setFloat4(const string &name, float value1, float value2, floa
 void ShaderClass::setFloat4(const string &name, vec4 parm4) const
 {
 	glUniform4f(glGetUniformLocation(ID, name.c_str()), parm4.x, parm4.y, parm4.z, parm4.w);
+}
+
+void ShaderClass::setTexture(const string &name, unsigned int ID, unsigned int slot) const
+{
+	glActiveTexture(GL_TEXTURE0 + slot);
+	setInt(name, slot);
+	glBindTexture(this->ID, ID);
 }

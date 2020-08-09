@@ -29,6 +29,7 @@
 #include "utils/ResourcesManager.h"
 #include "utils/RenderManager.h"
 #include "utils/EntityManager.h"
+#include "utils/GeometryGenerator.h"
 
 using namespace std;
 using namespace glm;
@@ -43,7 +44,11 @@ private:
     string _title;
     vec4 _clearColor;
     GLFWwindow *_window;
+    RenderTexture *renderTexture;
     UiCallBack _uiCallBack;
+
+    ShaderClass* quadShader;
+    Mesh* quadMesh;
 
 public:
     WSEngine();
@@ -84,7 +89,16 @@ public:
         _clearColor = color;
     }
 
-    void SetUiCallBack(UiCallBack uicallback);
+    void SetUiCallBack(UiCallBack uicallback)
+    {
+        _uiCallBack = uicallback;
+    }
+
+    void SetRenderTexture(RenderTexture *rt)
+    {
+        renderTexture = rt;
+    }
+
 };
 
 #endif

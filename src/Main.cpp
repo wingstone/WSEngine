@@ -3,12 +3,17 @@
 using namespace std;
 using namespace glm;
 
+unsigned int width = 1280;
+unsigned int height = 720;
+
 struct UiPeremeters
 {
 	bool show_demo_window;
-	vec4 clear_color;
+	vec4 clearColor;
 	Transform *trans;
 	Light *light;
+	vec4 ambientcolor;
+	RenderTexture *rt;
 };
 UiPeremeters gPeremeters;
 
@@ -22,15 +27,21 @@ void uicallback(WSEngine *engine)
 
 	ImGui::Checkbox("Demo Window", &gPeremeters.show_demo_window);
 	ImGui::Separator();
-	ImGui::ColorEdit4("clear color", (float *)&gPeremeters.clear_color);
-	engine->SetClearColor(gPeremeters.clear_color);
+	ImGui::Text("tmp RT");
+	ImGui::Image((void *)(intptr_t)(gPeremeters.rt->textureColorbuffer), ImVec2(256, 180), ImVec2(1, 1), ImVec2(0, 0));
+	ImGui::Separator();
+	ImGui::ColorEdit4("clear color", (float *)&gPeremeters.clearColor);
+
+	engine->SetClearColor(gPeremeters.clearColor);
+	ImGui::ColorEdit4("ambient color", (float *)&gPeremeters.ambientcolor);
+	engine->renderManager.SetAmbientColor(gPeremeters.ambientcolor);
 	ImGui::Separator();
 	ImGui::ColorEdit4("light color", (float *)&gPeremeters.light->lightColor);
 	ImGui::Separator();
 	ImGui::Text("TransForm");
-	ImGui::InputFloat3("Position", (float *)&gPeremeters.trans->position);
-	ImGui::InputFloat3("Rotation", (float *)&gPeremeters.trans->rotation);
-	ImGui::InputFloat3("Scale", (float *)&gPeremeters.trans->scale);
+	ImGui::SliderFloat3("Position", (float *)&gPeremeters.trans->position, -2.0f, 2.0f);
+	ImGui::SliderFloat3("Rotation", (float *)&gPeremeters.trans->rotation, -180.0f, 180.0f);
+	ImGui::SliderFloat3("Scale", (float *)&gPeremeters.trans->scale, 0.0f, 2.0f);
 	ImGui::Separator();
 	float fps = FPS::Instance().GetFps();
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / fps, fps);
@@ -52,6 +63,8 @@ int main()
 	vector<Mesh *> meshs = engine.resourceManager.LoadMesh("../../assets/monkey.fbx", &outnames);
 	ShaderClass *shader = engine.resourceManager.LoadShader("../../assets/vert.txt", "../../assets/frag.txt", "pbr");
 	PBRMaterial *mat = engine.resourceManager.CreateMaterial<PBRMaterial>(shader, "pbrmat");
+	RenderTexture *rt = engine.resourceManager.CreateRenderTexture(width, height, "copyrt");
+	engine.SetRenderTexture(rt);
 
 	//mesh entity
 	Entity *monkey = engine.entityManager.CreateEntity();
@@ -70,10 +83,12 @@ int main()
 	trans->rotation.y = 180.0f;
 	maincam->AddComponent<Camera>();
 
-	gPeremeters.clear_color = vec4(0.2f, 0.3f, 0.3f, 1.0f);
+	gPeremeters.clearColor = vec4(0.2f, 0.3f, 0.3f, 1.0f);
+	gPeremeters.ambientcolor = vec4(0.5, 0.5, 0.5, 1.0);
 	gPeremeters.show_demo_window = true;
 	gPeremeters.trans = monkey->GetComponent<Transform>();
 	gPeremeters.light = sun->GetComponent<Light>();
+	gPeremeters.rt = rt;
 
 	engine.Run(uicallback);
 	cout << "complete run" << endl;

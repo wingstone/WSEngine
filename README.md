@@ -10,12 +10,13 @@ Basic PC Game Engine
 
 ## Building
 
-1. `cd build`
-2. `cmake ..`
-3. `cmake --build . --config Release`
-4. `cmake --install . --prefix ..`  
-5. the WSEngine.exe will exist in WSEngine/bin folder
+1. `mkdir build`
+2. `cd build`
+3. `cmake ..`
+4. `cmake --build . --config Release`
+5. `cmake --install . --prefix ..`  
+6. the WSEngine.exe will exist in WSEngine/bin folder
 
 ## Example
 
-![engine](docs/imags/engine.jpg)
+![engine](docs/images/engine.jpg)
