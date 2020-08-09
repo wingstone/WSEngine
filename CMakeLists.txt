@@ -20,8 +20,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(INCLUDE_DIR include)
 set(SRC_DIR src)
 
-file(GLOB INCLUDE_FILES ${SRC_DIR}/*.h)
-file(GLOB SOURCE_FILES ${SRC_DIR}/*.cpp)
+file(GLOB INCLUDE_FILES ${INCLUDE_DIR}/*.h ${INCLUDE_DIR}/component/*.h ${INCLUDE_DIR}/core/*.h ${INCLUDE_DIR}/utils/*.h)
+file(GLOB SOURCE_FILES ${SRC_DIR}/*.cpp ${SRC_DIR}/component/*.cpp ${SRC_DIR}/core/*.cpp ${SRC_DIR}/utils/*.cpp)
 
 
 #------------------------
@@ -35,6 +35,7 @@ file(GLOB SOURCE_FILES ${SRC_DIR}/*.cpp)
 # add_subdirectory(${EXTERNAL}/tinyexr/wse)
 
 add_executable(${TARGET} ${INCLUDE_FILES} ${SOURCE_FILES} ${EXTERN_SRC})
+target_include_directories(${TARGET} PUBLIC ${INCLUDE_DIR})
 target_link_libraries(${TARGET} opengl32.lib)
 
 #------------------------
@@ -48,6 +49,6 @@ add_subdirectory(${EXTERNAL})
 #------------------------
 install(TARGETS ${TARGET} DESTINATION WSEngine/bin) # binary
 
-install(TARGETS ${TARGET} LIBRARY DESTINATION WSEngine/lib) # Library
+#install(TARGETS ${TARGET} LIBRARY DESTINATION WSEngine/lib) # Library
 
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION WSEngine/include) # Header files
