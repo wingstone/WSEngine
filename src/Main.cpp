@@ -28,7 +28,7 @@ void uicallback(WSEngine *engine)
 	ImGui::Checkbox("Demo Window", &gPeremeters.show_demo_window);
 	ImGui::Separator();
 	ImGui::Text("tmp RT");
-	ImGui::Image((void *)(intptr_t)(gPeremeters.rt->textureColorbuffer), ImVec2(256, 180), ImVec2(1, 1), ImVec2(0, 0));
+	ImGui::Image((void *)(intptr_t)(gPeremeters.rt->textureColorbuffer), ImVec2(256, 180), ImVec2(0, 1), ImVec2(1, 0));
 	ImGui::Separator();
 	ImGui::ColorEdit4("clear color", (float *)&gPeremeters.clearColor);
 
@@ -60,11 +60,21 @@ int main()
 
 	//resource loading
 	vector<string> outnames;
-	vector<Mesh *> meshs = engine.resourceManager.LoadMesh("../../assets/monkey.fbx", &outnames);
-	ShaderClass *shader = engine.resourceManager.LoadShader("../../assets/vert.txt", "../../assets/frag.txt", "pbr");
+	vector<Mesh *> meshs = engine.resourceManager.LoadMesh("../../assets/mask.fbx", &outnames);
+	ShaderClass *shader = engine.resourceManager.LoadShader("../../assets/pbrVert.txt", "../../assets/pbrFrag.txt", "pbr");
 	PBRMaterial *mat = engine.resourceManager.CreateMaterial<PBRMaterial>(shader, "pbrmat");
 	RenderTexture *rt = engine.resourceManager.CreateRenderTexture(width, height, "copyrt");
 	engine.SetRenderTexture(rt);
+	vector<string> skypaths{"../../assets/skybox/right.jpg",
+							"../../assets/skybox/left.jpg",
+							"../../assets/skybox/top.jpg",
+							"../../assets/skybox/bottom.jpg",
+							"../../assets/skybox/front.jpg",
+							"../../assets/skybox/back.jpg"};
+	Texture *sky = engine.resourceManager.LoadCubeTexture(skypaths, "skybox");
+	engine.renderManager.SetSkyBox(sky);
+	Texture *mask = engine.resourceManager.LoadTexture("../../assets/mask.tga", "mask");
+	mat->textures.push_back(mask);
 
 	//mesh entity
 	Entity *monkey = engine.entityManager.CreateEntity();
@@ -83,9 +93,10 @@ int main()
 	trans->rotation.y = 180.0f;
 	maincam->AddComponent<Camera>();
 
+	//gperameters setting
 	gPeremeters.clearColor = vec4(0.2f, 0.3f, 0.3f, 1.0f);
 	gPeremeters.ambientcolor = vec4(0.5, 0.5, 0.5, 1.0);
-	gPeremeters.show_demo_window = true;
+	gPeremeters.show_demo_window = false;
 	gPeremeters.trans = monkey->GetComponent<Transform>();
 	gPeremeters.light = sun->GetComponent<Light>();
 	gPeremeters.rt = rt;

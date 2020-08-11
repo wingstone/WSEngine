@@ -133,9 +133,16 @@ void ShaderClass::setFloat4(const string &name, vec4 parm4) const
 	glUniform4f(glGetUniformLocation(ID, name.c_str()), parm4.x, parm4.y, parm4.z, parm4.w);
 }
 
-void ShaderClass::setTexture(const string &name, unsigned int ID, unsigned int slot) const
+void ShaderClass::setTexture(const string &name, unsigned int ID, unsigned int slot, bool isCube) const
 {
 	glActiveTexture(GL_TEXTURE0 + slot);
 	setInt(name, slot);
-	glBindTexture(this->ID, ID);
+	if(isCube)
+	{
+		glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
+	}
+	else
+	{
+		glBindTexture(GL_TEXTURE_2D, ID);
+	}
 }

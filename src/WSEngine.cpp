@@ -59,11 +59,12 @@ bool WSEngine::Init()
 
 	renderManager.SetAmbientColor(vec4(0.4f, 0.4f, 0.4f, 1.0f));
 
+	//postprocess
 	quadShader = resourceManager.LoadShader("../../assets/quadVert.txt", "../../assets/quadFrag.txt", "quad");
-	vector<Vertex> verts;
-	vector<unsigned int> indes;
-	GeometryGenerator::GenerateQuad(verts, indes);
-	quadMesh = resourceManager.CreateMesh(verts, indes, "quad");
+	vector<Vertex> quadverts;
+	vector<unsigned int> quadindes;
+	GeometryGenerator::GenerateQuad(quadverts, quadindes);
+	quadMesh = resourceManager.CreateMesh(quadverts, quadindes, "quad");
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -81,6 +82,14 @@ bool WSEngine::Init()
 	ImGui_ImplGlfw_InitForOpenGL(_window, true);
 	const char *glsl_version = "#version 130";
 	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	//skybox
+	ShaderClass* shader = resourceManager.LoadShader("../../assets/skyboxVert.txt", "../../assets/skyboxFrag.txt", "skybox");
+	vector<Vertex> skyboxverts;
+	vector<unsigned int> skyboxindes;
+	GeometryGenerator::GenerateSkyBox(skyboxverts, skyboxindes);
+	Mesh* mesh = resourceManager.CreateMesh(skyboxverts, skyboxindes, "skybox");
+	renderManager.Init(shader, mesh);
 
 	return true;
 }

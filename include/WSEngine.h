@@ -29,7 +29,6 @@
 #include "utils/ResourcesManager.h"
 #include "utils/RenderManager.h"
 #include "utils/EntityManager.h"
-#include "utils/GeometryGenerator.h"
 
 using namespace std;
 using namespace glm;
@@ -47,8 +46,8 @@ private:
     RenderTexture *renderTexture;
     UiCallBack _uiCallBack;
 
-    ShaderClass* quadShader;
-    Mesh* quadMesh;
+    ShaderClass *quadShader;
+    Mesh *quadMesh;
 
 public:
     WSEngine();

@@ -14,6 +14,8 @@
 #include "../component/Camera.h"
 #include "../component/Light.h"
 #include "../component/MeshRender.h"
+#include "../utils/GeometryGenerator.h"
+#include "../WSEngine.h"
 
 using namespace std;
 using namespace glm;
@@ -28,6 +30,10 @@ private:
 	vector<Entity *> lights;
 	vector<Entity *> renders;
 
+	Texture *_skybox;
+	ShaderClass *skyboxShader;
+	Mesh *skyboxMesh;
+
 public:
 	WSEngine *engine;
 
@@ -38,6 +44,10 @@ public:
 		lightSetting.ambientIntensity = 1.0f;
 		mainCamera = nullptr;
 		engine = nullptr;
+
+		_skybox = nullptr;
+		skyboxShader = nullptr;
+		skyboxMesh = nullptr;
 	}
 	RenderManager(WSEngine *engine)
 	{
@@ -45,6 +55,17 @@ public:
 		lightSetting.ambientIntensity = 1.0f;
 		this->engine = engine;
 		mainCamera = nullptr;
+
+		_skybox = nullptr;
+		skyboxShader = nullptr;
+		skyboxMesh = nullptr;
+	}
+
+	void Init(ShaderClass *shader, Mesh* mesh)
+	{
+		//skybox
+		skyboxShader = shader;
+		skyboxMesh = mesh;
 	}
 
 	void SetAmbientColor(vec4 color)
@@ -60,6 +81,11 @@ public:
 	void SetMainCamera(Entity *camera)
 	{
 		mainCamera = camera;
+	}
+
+	void SetSkyBox(Texture *skybox)
+	{
+		_skybox = skybox;
 	}
 
 	void RemoveMainCamera(Entity *camera)
@@ -121,6 +147,16 @@ public:
 			MeshRender *render = iter->GetComponent<MeshRender>();
 			render->DrawModel(render->transform, camera, light, &lightSetting);
 		}
+
+		//render skybox
+		skyboxShader->use();
+		Camera *camera = mainCamera->GetComponent<Camera>();
+		unsigned int viewLoc = glGetUniformLocation(skyboxShader->ID, "view");
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(camera->GetViewMatrix()));
+		unsigned int projectionLoc = glGetUniformLocation(skyboxShader->ID, "projection");
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(camera->GetProjectionMatrix()));
+		skyboxShader->setTexture("skybox", _skybox->ID, 0, true);
+		skyboxMesh->DrawMesh();
 
 		return true;
 	}

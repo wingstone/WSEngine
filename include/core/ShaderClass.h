@@ -32,7 +32,7 @@ public:
 
 	void setFloat4(const string &name, vec4 parm4) const;
 
-	void setTexture(const string &name, unsigned int ID, unsigned int slot) const;
+	void setTexture(const string &name, unsigned int ID, unsigned int slot, bool isCube = false) const;
 
 	unsigned int ID;
 

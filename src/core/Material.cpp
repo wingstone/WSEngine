@@ -26,6 +26,8 @@ PBRMaterial::PBRMaterial(ShaderClass* pshader): Material(pshader)
 {
 	this->textures = vector<Texture*>();
 	this->strings = vector<string>();
+	strings.push_back("diffuseTex");
+	strings.push_back("specularTex");
 	diffuseColor = vec4(0.9f, 0.6f, 0.8f, 1.0f);
 	specularColor = vec4(0.4f, 0.6f, 0.3f, 1.0f);
 	smoothness = 0.7f;
@@ -38,9 +40,7 @@ void PBRMaterial::Render()
 	unsigned int id = 0;
 	for (unsigned int i = 0; i <glm::min(textures.size(), strings.size()) ; i++)
 	{
-		glActiveTexture(GL_TEXTURE0 + i);
-		pshader->setInt(strings[i], i);
-		glBindTexture(pshader->ID, textures[i]->ID);
+		pshader->setTexture(strings[i], textures[i]->ID, i);
 	}
 
 	//set color;
