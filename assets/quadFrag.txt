@@ -4,9 +4,40 @@ out vec4 FragColor;
 in vec2 TexCoords;
 
 uniform sampler2D screenTexture;
+uniform float autoExplosion;
+
+vec3 GammaToLinearSpace (vec3 value)
+{
+    return vec3(pow(value.r, 2.2), pow(value.g, 2.2), pow(value.b, 2.2));
+}
+
+vec3 LinearToGammaSpace (vec3 value)
+{
+    return vec3(pow(value.r, 0.45454545), pow(value.g, 0.45454545), pow(value.b, 0.45454545));
+}
+
+//https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+vec3 ACESFilm(vec3 x)
+{
+    x = x*autoExplosion;
+
+    float a = 2.51f;
+    float b = 0.03f;
+    float c = 2.43f;
+    float d = 0.59f;
+    float e = 0.14f;
+    x = (x*(a*x+b))/(x*(c*x+d)+e);
+
+    return clamp(x, 0.0, 1.0);
+}
 
 void main()
 {
-    vec3 col = texture(screenTexture, TexCoords).grb;
+    vec3 col = texture(screenTexture, TexCoords).rgb;
+
+    col = GammaToLinearSpace(col);
+    col = ACESFilm(col);
+    col = LinearToGammaSpace(col);
+
     FragColor = vec4(col, 1.0f);
 } 

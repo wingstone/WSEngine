@@ -19,6 +19,7 @@ public:
 	float aspect;
 	float nearClip;
 	float farClip;
+	float focusDist;
 
 	static const ComponentType TYPE = COMPONENT_CAMERA;
 

@@ -17,23 +17,31 @@ mat4 Transform::GetModelMatrix()
 {
 	mat4 model = mat4(1.0f);
 	model = glm::scale(model, scale);
-	model = rotate(model, radians(rotation.x), vec3(1, 0, 0));
-	model = rotate(model, radians(rotation.y), vec3(0, 1, 0));
-	model = rotate(model, radians(rotation.z), vec3(0, 0, 1));
+
+	//rot mat use quaternion, euler is not friendly
+	quat rotquat = quat(radians(rotation));
+	mat4 rot = glm::toMat4(rotquat);
+	model = rot*model;
 	model = translate(model, position);
 	return model;
 }
 
 vec3 Transform::Front()
 {
-	vec4 front = GetModelMatrix()*vec4(0, 0, 1, 0);
-	return normalize(vec3(front));
+	vec3 front = GetModelMatrix()*vec4(0, 0, 1, 0);
+	return normalize(front);
 }
 
 vec3 Transform::Up()
 {
-	vec4 up = GetModelMatrix()*vec4(0, 1, 0, 0);
+	vec3 up = GetModelMatrix()*vec4(0, 1, 0, 0);
 	return normalize(vec3(up));
+}
+
+vec3 Transform::Right()
+{
+	vec3 right = GetModelMatrix()*vec4(1, 0, 0, 0);
+	return normalize(vec3(right));
 }
 
 Transform::~Transform()

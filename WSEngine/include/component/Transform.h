@@ -2,6 +2,8 @@
 #define TRANSFORM_H
 
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -27,10 +29,10 @@ public:
 	mat4 GetModelMatrix();
 	vec3 Front();
 	vec3 Up();
+	vec3 Right();
 
 
 private:
-
 };
 
 

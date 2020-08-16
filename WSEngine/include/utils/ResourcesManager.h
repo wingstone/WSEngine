@@ -21,18 +21,49 @@ private:
 	std::map<string, Material *> materials;
 	std::map<string, RenderTexture *> renderTextures;
 
-public:
-	WSEngine *engine;
-
-public:
 	ResourcesManager()
 	{
-		engine = nullptr;
 	}
-	ResourcesManager(WSEngine *engine)
+
+public:
+	static ResourcesManager &Instance()
 	{
-		this->engine = engine;
-	};
+		static ResourcesManager instance;
+		return instance;
+	}
+
+	void Init()
+	{
+	}
+
+	void Quit()
+	{
+		for (auto iter = textures.begin(); iter != textures.end(); iter++)
+		{
+			textures.erase(iter);
+			delete iter->second;
+		}
+		for (auto iter = meshs.begin(); iter != meshs.end(); iter++)
+		{
+			meshs.erase(iter);
+			delete iter->second;
+		}
+		for (auto iter = shaders.begin(); iter != shaders.end(); iter++)
+		{
+			shaders.erase(iter);
+			delete iter->second;
+		}
+		for (auto iter = materials.begin(); iter != materials.end(); iter++)
+		{
+			materials.erase(iter);
+			delete iter->second;
+		}
+		for (auto iter = renderTextures.begin(); iter != renderTextures.end(); iter++)
+		{
+			renderTextures.erase(iter);
+			delete iter->second;
+		}
+	}
 
 	Texture *LoadTexture(const char *path, const char *name)
 	{
@@ -189,7 +220,9 @@ public:
 		return material;
 	}
 
-	RenderTexture *CreateRenderTexture(unsigned int width, unsigned int height, const char *name)
+	RenderTexture *CreateRenderTexture(unsigned int width, unsigned int height, const char *name,
+									   bool haveRenderBuffer = true, bool isHDR = false,
+									   bool isMSAA = false, unsigned int msaaSample = 4)
 	{
 		//check name
 		if (renderTextures.find("name") != renderTextures.end())
@@ -205,17 +238,59 @@ public:
 		// create a color attachment texture
 		unsigned int textureColorbuffer;
 		glGenTextures(1, &textureColorbuffer);
-		glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+		if (isHDR && isMSAA)
+		{
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, textureColorbuffer);
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSample, GL_RGB16F, width, height, GL_TRUE);
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, textureColorbuffer, 0);
+		}
+		else if (isHDR && !isMSAA)
+		{
+			glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//must have
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+		else if (!isHDR && isMSAA)
+		{
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, textureColorbuffer);
+			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, width, height, GL_TRUE);
+			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, textureColorbuffer, 0);
+		}
+		else
+		{
+			glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //must have
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
 		// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-		unsigned int rbo;
-		glGenRenderbuffers(1, &rbo);
-		glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
-		glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+		unsigned int rbo = 0;
+		if (haveRenderBuffer)
+		{
+			if (!isMSAA)
+			{
+				glGenRenderbuffers(1, &rbo);
+				glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+				glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+			}
+			else
+			{
+				glGenRenderbuffers(1, &rbo);
+				glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+				glRenderbufferStorageMultisample(GL_RENDERBUFFER, msaaSample, GL_DEPTH24_STENCIL8, width, height);
+				glBindRenderbuffer(GL_RENDERBUFFER, 0);
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+			}
+		}
+
 		// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 			cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
@@ -227,35 +302,6 @@ public:
 		rt->textureColorbuffer = textureColorbuffer;
 		rt->rbo = rbo;
 		return rt;
-	}
-
-	void Quit()
-	{
-		for (auto iter = textures.begin(); iter != textures.end(); iter++)
-		{
-			textures.erase(iter);
-			delete iter->second;
-		}
-		for (auto iter = meshs.begin(); iter != meshs.end(); iter++)
-		{
-			meshs.erase(iter);
-			delete iter->second;
-		}
-		for (auto iter = shaders.begin(); iter != shaders.end(); iter++)
-		{
-			shaders.erase(iter);
-			delete iter->second;
-		}
-		for (auto iter = materials.begin(); iter != materials.end(); iter++)
-		{
-			materials.erase(iter);
-			delete iter->second;
-		}
-		for (auto iter = renderTextures.begin(); iter != renderTextures.end(); iter++)
-		{
-			renderTextures.erase(iter);
-			delete iter->second;
-		}
 	}
 
 private:

@@ -36,29 +36,21 @@ using namespace glm;
 class WSEngine
 {
 public:
-    typedef function<void(WSEngine *)> UiCallBack;
+    typedef function<void()> UiCallBack;
 
 private:
     unsigned int _width, _height;
     string _title;
-    vec4 _clearColor;
     GLFWwindow *_window;
-    RenderTexture *renderTexture;
     UiCallBack _uiCallBack;
 
-    ShaderClass *quadShader;
-    Mesh *quadMesh;
 
 public:
     WSEngine();
     ~WSEngine();
 
-    ResourcesManager resourceManager;
-    RenderManager renderManager;
-    EntityManager entityManager;
-
     //main
-    bool Init();
+    bool Init(int width = 1280, int height = 720, const char* title = "WSEngine");
     void Run(UiCallBack uiCallBack);
     void Quit();
 
@@ -73,29 +65,9 @@ public:
         return _height;
     }
 
-    void SetWidth(int value)
-    {
-        _width = value;
-    }
-
-    void SetHeight(int value)
-    {
-        _height = value;
-    }
-
-    void SetClearColor(vec4 color)
-    {
-        _clearColor = color;
-    }
-
     void SetUiCallBack(UiCallBack uicallback)
     {
         _uiCallBack = uicallback;
-    }
-
-    void SetRenderTexture(RenderTexture *rt)
-    {
-        renderTexture = rt;
     }
 
 };

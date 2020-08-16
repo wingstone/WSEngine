@@ -13,20 +13,32 @@ class Entity;
 
 class EntityManager
 {
-public:
-    WSEngine *engine;
-
 private:
     std::list<Entity *> entities;
-
-public:
     EntityManager()
     {
-        engine = nullptr;
     }
-    EntityManager(WSEngine *engine)
+
+public:
+	static EntityManager& Instance()
+	{
+		static EntityManager instance;
+		return instance;
+
+	}
+
+    void Init()
     {
-        this->engine = engine;
+    }
+
+    void Quit()
+    {
+        for (auto iter = entities.begin(); iter != entities.end(); iter++)
+        {
+            (*iter)->Destroy();
+            entities.erase(iter);
+            delete *iter;
+        }
     }
 
     Entity *CreateEntity(vec3 position = vec3(0, 0, 0), vec3 rotation = vec3(0, 0, 0), vec3 scale = vec3(1, 1, 1))
@@ -53,15 +65,6 @@ public:
         }
     }
 
-    void Quit()
-    {
-        for (auto iter = entities.begin(); iter != entities.end(); iter++)
-        {
-            (*iter)->Destroy();
-            entities.erase(iter);
-            delete *iter;
-        }
-    }
 };
 
 #endif

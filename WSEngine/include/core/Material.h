@@ -40,7 +40,7 @@ public:
 	vector<string> strings;
 	vec4 diffuseColor;
 	vec4 specularColor;
-	float smoothness;
+	float roughness;
 
 	PBRMaterial(ShaderClass* pshader);
 

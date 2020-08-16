@@ -17,6 +17,7 @@ void Material::ImportRenderSetting(Transform* transform, Camera* camera, Light* 
 
 	pshader->setFloat4("lightPos", light->lightPos);
 	pshader->setFloat4("lightColor", light->lightColor);
+	pshader->setFloat("lightIntensity", light->lightIntensity);
 
 	pshader->setFloat4("ambientColor", lightSetting->ambientColor);
 	pshader->setFloat("ambientIntensity", lightSetting->ambientIntensity);
@@ -26,11 +27,12 @@ PBRMaterial::PBRMaterial(ShaderClass* pshader): Material(pshader)
 {
 	this->textures = vector<Texture*>();
 	this->strings = vector<string>();
-	strings.push_back("diffuseTex");
-	strings.push_back("specularTex");
+	strings.push_back("albedoTex");
+	strings.push_back("metalicTex");
+	strings.push_back("normalTex");
 	diffuseColor = vec4(0.9f, 0.6f, 0.8f, 1.0f);
 	specularColor = vec4(0.4f, 0.6f, 0.3f, 1.0f);
-	smoothness = 0.7f;
+	roughness = 0.7f;
 }
 
 void PBRMaterial::Render()
@@ -46,5 +48,5 @@ void PBRMaterial::Render()
 	//set color;
 	pshader->setFloat4("diffuseColor", diffuseColor);
 	pshader->setFloat4("specularColor", specularColor);
-	pshader->setFloat("smoothness", smoothness);
+	pshader->setFloat("roughness", roughness);
 }

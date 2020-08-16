@@ -10,18 +10,21 @@ uniform float ambientIntensity;
 
 uniform vec4 lightColor;
 uniform vec4 lightPos;
+uniform float lightIntensity;
 
 uniform vec4 cameraPos;
 
 uniform vec4 diffuseColor;
 uniform vec4 specularColor;
-uniform float smoothness;
+uniform float roughness;
 
-//uniform vec4 tintColor;
-uniform sampler2D diffuseTex;
-//uniform sampler2D specularTex;
+uniform sampler2D albedoTex;
+//uniform sampler2D metalicTex;
+//uniform sampler2D normalTex;
 
 out vec4 fragcolor;
+
+#define unity_ColorSpaceDielectricSpec vec4(0.220916301, 0.220916301, 0.220916301, 1.0 - 0.220916301)
 
 vec3 GammaToLinearSpace (vec3 value)
 {
@@ -60,14 +63,21 @@ float SmithJointGGXVisibilityTerm (float NdotL, float NdotV, float roughness)
     return 0.5f / (lambdaV + lambdaL + 1e-5f); 
 };
 
-//“—æ≠‘§≥À¡ÀPI
 void main()
 {
+	//vec3 albedo = GammaToLinearSpace(texture(albedoTex, TexCoords).rgb);
+	//vec3 value = texture(metalicTex, TexCoords).rgb;
+	vec3 albedo = GammaToLinearSpace(outColor.rgb);
+	float metallic = 0;
+	vec3 diffcolor = unity_ColorSpaceDielectricSpec.a*(1.0 - metallic)*albedo;
+	vec3 speccolor = mix(unity_ColorSpaceDielectricSpec.rgb, albedo, metallic);
+
+
 	vec3 amcolor = GammaToLinearSpace(ambientColor.rgb);
-	vec3 diff = texture(diffuseTex, TexCoords).rgb;
-	vec3 diffcolor = GammaToLinearSpace(diff);
-	vec3 lightcolor = GammaToLinearSpace(lightColor.rgb);
-	vec3 speccolor = GammaToLinearSpace(specularColor.rgb);
+	//vec3 diffcolor = GammaToLinearSpace(diff);
+	//vec3 speccolor = GammaToLinearSpace(specularColor.rgb);
+	vec3 lightcolor = GammaToLinearSpace(lightColor.rgb*lightIntensity);
+
 
 	vec3 L = normalize(lightPos.xyz);
 	vec3 N = normalize(outNormal);
@@ -81,13 +91,13 @@ void main()
 
 	vec3 ambient = amcolor * diffcolor;
 	
-	vec3 diffuse = ndl * lightcolor * diffcolor;
+	vec3 diffuse = ndl * lightcolor.rgb * diffcolor;
 
-	float roughness = max(1-smoothness, 0.002);
-    float G = SmithJointGGXVisibilityTerm (ndl, ndv, roughness);
-    float D = GGXTerm (ndh, roughness);
+	float rough = max(roughness, 0.002);
+    float G = SmithJointGGXVisibilityTerm (ndl, ndv, rough);
+    float D = GGXTerm (ndh, rough);
 	vec3 F = FresnelTerm (speccolor, ldh);
-	vec3 specular = ndl * lightcolor * G * D * F;
+	vec3 specular = ndl * lightcolor.rgb * G * D * F;
 
 	vec3 color = LinearToGammaSpace(ambient + diffuse + specular);
 	fragcolor = vec4(color, 1.0f);

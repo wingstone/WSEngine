@@ -7,6 +7,7 @@ Camera::Camera()
     aspect = 1280.0f/720;
     nearClip = 0.01f;
     farClip = 100.0f;
+    focusDist = 5.0f;
 }
 
 

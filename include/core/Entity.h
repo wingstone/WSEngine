@@ -42,13 +42,13 @@ public:
 		switch (t)
 		{
 		case COMPONENT_CAMERA:
-			entityManager->engine->renderManager.SetMainCamera(this);
+			RenderManager::Instance().AddCamera(this);
 			break;
 		case COMPONENT_LIGHT:
-			entityManager->engine->renderManager.AddLight(this);
+			RenderManager::Instance().AddLight(this);
 			break;
 		case COMPONENT_RENDERER:
-			entityManager->engine->renderManager.AddMeshRender(this);
+			RenderManager::Instance().AddMeshRender(this);
 			break;
 		default:
 			break;

@@ -1,15 +1,11 @@
 #include <WSEngine.h>
 
-WSEngine::WSEngine() : renderManager(this), entityManager(this), resourceManager(this)
+WSEngine::WSEngine()
 {
-	_width = 1280;
-	_height = 720;
-	_title = "WSEngine";
+	_width = 0;
+	_height = 0;
+	_title = "";
 	_window = nullptr;
-	renderTexture = nullptr;
-
-	quadShader = nullptr;
-	quadMesh = nullptr;
 }
 
 WSEngine::~WSEngine()
@@ -20,20 +16,91 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
 	glViewport(0, 0, width, height);
 }
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos)
+{
+	static bool firstMouse = true;
+	static float lastX = 0;
+	static float lastY = 0;
+	if (firstMouse)
+	{
+		lastX = (float)xpos;
+		lastY = (float)ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = (float)xpos - lastX;
+	float yoffset = (float)ypos - lastY;
+	yoffset = -yoffset; //reverse
+
+	lastX = (float)xpos;
+	lastY = (float)ypos;
+
+	// if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
+	// {
+	// 	Camera* camera = RenderManager::Instance().GetDefaultCamera()->GetComponent<Camera>();
+	// 	camera->transform->rotation.y -= xoffset;
+	// 	camera->transform->rotation.x -= yoffset;
+	// }
+	// else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS
+	// 	&&glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+	// {
+	// 	Camera* camera = RenderManager::Instance().GetDefaultCamera()->GetComponent<Camera>();
+	// 	vec3 focuspos = camera->transform->position + camera->transform->Front()*camera->focusDist;
+	// 	camera->transform->rotation.y -= xoffset;
+	// 	camera->transform->rotation.x -= yoffset;
+	// 	camera->transform->position =focuspos - camera->transform->Front()*camera->focusDist;
+	// }
+
+	//another interection
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) == GLFW_PRESS)
+	{
+		//right button
+		Camera *camera = RenderManager::Instance().GetDefaultCamera()->GetComponent<Camera>();
+		camera->transform->position += camera->transform->Right() * xoffset * 0.02f;
+		camera->transform->position -= camera->transform->Up() * yoffset * 0.02f;
+	}
+	else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS && glfwGetKey(window, GLFW_KEY_LEFT_ALT) == GLFW_PRESS)
+	{
+		//left button
+		Camera *camera = RenderManager::Instance().GetDefaultCamera()->GetComponent<Camera>();
+		vec3 focuspos = camera->transform->position + camera->transform->Front() * camera->focusDist;
+
+		static float totalRotY = 0;
+		totalRotY += yoffset;
+
+		camera->transform->rotation.y -= xoffset;
+		if (abs(totalRotY) < 90)
+		{
+			camera->transform->rotation.x -= yoffset;
+		}
+		camera->transform->position = focuspos - camera->transform->Front() * camera->focusDist;
+	}
+}
+
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
+{
+	Camera *camera = RenderManager::Instance().GetDefaultCamera()->GetComponent<Camera>();
+	camera->transform->position += camera->transform->Front() * (float)yoffset * 0.1f;
+}
+
 void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 }
 
-bool WSEngine::Init()
+bool WSEngine::Init(int width, int height, const char *title)
 {
+	_width = width;
+	_height = height;
+	_title = title;
+
 	//window init
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
 	_window = glfwCreateWindow(_width, _height, _title.c_str(), NULL, NULL);
 	if (_window == NULL)
@@ -52,19 +119,12 @@ bool WSEngine::Init()
 	}
 
 	glfwSetFramebufferSizeCallback(_window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(_window, mouse_callback);
+	glfwSetScrollCallback(_window, scroll_callback);
 
 	int display_w, display_h;
 	glfwGetFramebufferSize(_window, &display_w, &display_h);
 	glViewport(0, 0, display_w, display_h);
-
-	renderManager.SetAmbientColor(vec4(0.4f, 0.4f, 0.4f, 1.0f));
-
-	//postprocess
-	quadShader = resourceManager.LoadShader("../../assets/quadVert.txt", "../../assets/quadFrag.txt", "quad");
-	vector<Vertex> quadverts;
-	vector<unsigned int> quadindes;
-	GeometryGenerator::GenerateQuad(quadverts, quadindes);
-	quadMesh = resourceManager.CreateMesh(quadverts, quadindes, "quad");
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -83,13 +143,10 @@ bool WSEngine::Init()
 	const char *glsl_version = "#version 130";
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
-	//skybox
-	ShaderClass* shader = resourceManager.LoadShader("../../assets/skyboxVert.txt", "../../assets/skyboxFrag.txt", "skybox");
-	vector<Vertex> skyboxverts;
-	vector<unsigned int> skyboxindes;
-	GeometryGenerator::GenerateSkyBox(skyboxverts, skyboxindes);
-	Mesh* mesh = resourceManager.CreateMesh(skyboxverts, skyboxindes, "skybox");
-	renderManager.Init(shader, mesh);
+	//manager init
+	ResourcesManager::Instance().Init();
+	RenderManager::Instance().Init();
+	EntityManager::Instance().Init();
 
 	return true;
 }
@@ -101,42 +158,14 @@ void WSEngine::Run(UiCallBack uiCallBack)
 		processInput(_window);
 		FPS::Instance().Update();
 
-		if (renderTexture != nullptr)
-		{
-			glBindFramebuffer(GL_FRAMEBUFFER, renderTexture->framebuffer);
-			glEnable(GL_DEPTH_TEST);
-			glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			if (!renderManager.Render())
-				break;
-
-			//postprocess
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			glDisable(GL_DEPTH_TEST);
-			glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			quadShader->use();
-			quadShader->setTexture("screenTexture", renderTexture->textureColorbuffer, 0);
-			quadMesh->DrawMesh();
-		}
-		else
-		{
-			glEnable(GL_DEPTH_TEST);
-			glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			if (!renderManager.Render())
-				break;
-		}
+		RenderManager::Instance().Render();
 
 		//imgui Start
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		uiCallBack(this);
+		uiCallBack();
 
 		ImGui::Render();
 
@@ -157,10 +186,10 @@ void WSEngine::Quit()
 
 	glfwTerminate();
 
-	renderManager.Quit();
+	RenderManager::Instance().Quit();
 	GlobalLog::Log("render manager quit complete");
-	entityManager.Quit();
+	EntityManager::Instance().Quit();
 	GlobalLog::Log("entity manager quit complete");
-	resourceManager.Quit();
+	ResourcesManager::Instance().Quit();
 	GlobalLog::Log("resource manager quit complete");
 }
