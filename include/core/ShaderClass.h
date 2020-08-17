@@ -27,6 +27,10 @@ public:
 	void setInt(const string &name, int value) const;
 
 	void setFloat(const string &name, float value) const;
+	
+	void setFloat2(const string &name, float value1, float value2) const;
+
+	void setFloat2(const string &name, vec2 parm2) const;
 
 	void setFloat4(const string &name, float value1, float value2, float value3, float value4) const;
 

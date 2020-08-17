@@ -1,0 +1,19 @@
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+
+uniform float threshold;
+
+void main()
+{
+    vec3 col = texture(screenTexture, TexCoords).rgb;
+    float br = max(max(col.r, col.g), col.b);
+
+    col = col - vec3(threshold, threshold, threshold);
+    col = max(col, vec3(0,0,0));
+
+    FragColor = vec4(col, 1.0f);
+} 

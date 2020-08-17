@@ -12,7 +12,8 @@ class Texture
 {
 public:
 	unsigned int ID;
-	
+	unsigned int width;
+	unsigned int height;
 };
 
 

@@ -31,6 +31,8 @@ private:
 	unsigned int msaaSample;
 	bool useHDR;
 
+	float useVignette;
+	float useToneMapping;
 	float autoExplosion;
 
 	LightSetting lightSetting;
@@ -53,6 +55,15 @@ private:
 	RenderTexture *renderTexture;
 	RenderTexture *tempRenderTexture;
 
+	//post bloom
+	ShaderClass *preShader;
+	ShaderClass *blurHShader;
+	ShaderClass *blurVShader;
+	ShaderClass *mergeShader;
+	RenderTexture *blurRT;
+	RenderTexture *tempBlurRT;
+	float threshold;
+
 	RenderManager()
 	{
 		cullback = true;
@@ -62,6 +73,8 @@ private:
 		useHDR = true;
 
 		autoExplosion = 1.0f;
+		useVignette = 1.0f;
+		useToneMapping = 1.0f;
 
 		lightSetting.ambientColor = vec4(0.5, 0.5, 0.5, 1.0);
 		lightSetting.ambientIntensity = 1.0f;
@@ -75,6 +88,14 @@ private:
 		quadMesh = nullptr;
 		renderTexture = nullptr;
 		tempRenderTexture = nullptr;
+
+		preShader = nullptr;
+		blurHShader = nullptr;
+		blurVShader = nullptr;
+		mergeShader = nullptr;
+		blurRT = nullptr;
+		tempBlurRT = nullptr;
+		threshold = 1.0f;
 	}
 
 	void ReSetRenderTexture()
@@ -188,7 +209,7 @@ public:
 		trans->position = glm::vec3(0.0f, 0.0f, 5.0f);
 		trans->rotation.y = 180.0f;
 
-		//postprocess
+		//postprocess copy
 		quadShader = ResourcesManager::Instance().LoadShader("../../assets/quadVert.txt", "../../assets/quadFrag.txt", "quad");
 		vector<Vertex> quadverts;
 		vector<unsigned int> quadindes;
@@ -196,6 +217,14 @@ public:
 		quadMesh = ResourcesManager::Instance().CreateMesh(quadverts, quadindes, "quad");
 		renderTexture = ResourcesManager::Instance().CreateRenderTexture(1280, 720, "quad", true, useHDR, useMSAA);
 		tempRenderTexture = ResourcesManager::Instance().CreateRenderTexture(1280, 720, "tmpRT", false, useHDR, false);
+
+		//postprocess bloom
+		preShader = ResourcesManager::Instance().LoadShader("../../assets/bloomVert.txt", "../../assets/bloomPreFrag.txt", "bloomPre");
+		blurHShader = ResourcesManager::Instance().LoadShader("../../assets/bloomVert.txt", "../../assets/bloomHBlurFrag.txt", "bloomHBlur");
+		blurVShader = ResourcesManager::Instance().LoadShader("../../assets/bloomVert.txt", "../../assets/bloomVBlurFrag.txt", "bloomVBlur");
+		mergeShader = ResourcesManager::Instance().LoadShader("../../assets/bloomVert.txt", "../../assets/bloomMergeFrag.txt", "bloomMerge");
+		blurRT = ResourcesManager::Instance().CreateRenderTexture(1280, 720, "blurquad", false, useHDR, false);
+		tempBlurRT = ResourcesManager::Instance().CreateRenderTexture(1280, 720, "tmpblurRT", false, useHDR, false);
 	}
 
 	void SetClearColor(vec4 color)
@@ -300,6 +329,21 @@ public:
 		autoExplosion = value;
 	}
 
+	void SetVignette(bool value)
+	{
+		useVignette = value ? 1.0f : 0.0f;
+	}
+
+	void SetToneMapping(bool value)
+	{
+		useToneMapping = value ? 1.0f : 0.0f;
+	}
+
+	void SetThreshold(float value)
+	{
+		threshold =value;
+	}
+
 	bool Render()
 	{
 
@@ -385,14 +429,72 @@ public:
 		glBlitFramebuffer(0, 0, 1280, 720, 0, 0, 1280, 720, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 		//postprocess
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//bloom pre
+		glBindFramebuffer(GL_FRAMEBUFFER, blurRT->framebuffer);
 		glDisable(GL_DEPTH_TEST);
+		preShader->use();
+		preShader->setTexture("screenTexture", tempRenderTexture->textureColorbuffer, 0);
+		preShader->setFloat("threshold", threshold);
+		quadMesh->DrawMesh();
+
+		//bloom blur1
+		glBindFramebuffer(GL_FRAMEBUFFER, tempBlurRT->framebuffer);
+		blurHShader->use();
+		blurHShader->setTexture("screenTexture", blurRT->textureColorbuffer, 0);
+		blurHShader->setFloat2("screenTexture_size", 1280, 720);
+		quadMesh->DrawMesh();
+		//bloom blur2
+		glBindFramebuffer(GL_FRAMEBUFFER, blurRT->framebuffer);
+		blurVShader->use();
+		blurVShader->setTexture("screenTexture", tempBlurRT->textureColorbuffer, 0);
+		blurVShader->setFloat2("screenTexture_size", 1280, 720);
+		quadMesh->DrawMesh();
+
+		
+		//bloom blur1
+		glBindFramebuffer(GL_FRAMEBUFFER, tempBlurRT->framebuffer);
+		blurHShader->use();
+		blurHShader->setTexture("screenTexture", blurRT->textureColorbuffer, 0);
+		blurHShader->setFloat2("screenTexture_size", 1280/2, 720/2);
+		quadMesh->DrawMesh();
+		//bloom blur2
+		glBindFramebuffer(GL_FRAMEBUFFER, blurRT->framebuffer);
+		blurVShader->use();
+		blurVShader->setTexture("screenTexture", tempBlurRT->textureColorbuffer, 0);
+		blurVShader->setFloat2("screenTexture_size", 1280/2, 720/2);
+		quadMesh->DrawMesh();
+
+		
+		//bloom blur1
+		glBindFramebuffer(GL_FRAMEBUFFER, tempBlurRT->framebuffer);
+		blurHShader->use();
+		blurHShader->setTexture("screenTexture", blurRT->textureColorbuffer, 0);
+		blurHShader->setFloat2("screenTexture_size", 1280/4, 720/4);
+		quadMesh->DrawMesh();
+		//bloom blur2
+		glBindFramebuffer(GL_FRAMEBUFFER, blurRT->framebuffer);
+		blurVShader->use();
+		blurVShader->setTexture("screenTexture", tempBlurRT->textureColorbuffer, 0);
+		blurVShader->setFloat2("screenTexture_size", 1280*4, 720*4);
+		quadMesh->DrawMesh();
+
+		//bloom merge
+		glBindFramebuffer(GL_FRAMEBUFFER, tempRenderTexture->framebuffer);
+		mergeShader->use();
+		mergeShader->setTexture("screenTexture", tempRenderTexture->textureColorbuffer, 0);
+		mergeShader->setTexture("blurScreenTexture", blurRT->textureColorbuffer, 1);
+		quadMesh->DrawMesh();
+
+		//copy
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		quadShader->use();
 		quadShader->setTexture("screenTexture", tempRenderTexture->textureColorbuffer, 0);
 		quadShader->setFloat("autoExplosion", autoExplosion);
+		quadShader->setFloat("useToneMapping", useToneMapping);
+		quadShader->setFloat("useVignette", useVignette);
 		quadMesh->DrawMesh();
 
 		return true;

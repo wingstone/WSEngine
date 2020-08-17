@@ -123,6 +123,16 @@ void ShaderClass::setFloat(const string &name, float value) const
 	glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
 
+void ShaderClass::setFloat2(const string &name, float value1, float value2) const
+{
+	glUniform2f(glGetUniformLocation(ID, name.c_str()), value1, value2);
+}
+
+void ShaderClass::setFloat2(const string &name, vec2 parm2) const
+{
+	glUniform2f(glGetUniformLocation(ID, name.c_str()), parm2.x, parm2.y);
+}
+
 void ShaderClass::setFloat4(const string &name, float value1, float value2, float value3, float value4) const
 {
 	glUniform4f(glGetUniformLocation(ID, name.c_str()), value1, value2, value3, value4);
@@ -137,7 +147,7 @@ void ShaderClass::setTexture(const string &name, unsigned int ID, unsigned int s
 {
 	glActiveTexture(GL_TEXTURE0 + slot);
 	setInt(name, slot);
-	if(isCube)
+	if (isCube)
 	{
 		glBindTexture(GL_TEXTURE_CUBE_MAP, ID);
 	}

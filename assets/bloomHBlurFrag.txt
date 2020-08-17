@@ -1,0 +1,59 @@
+#version 330 core
+out vec4 FragColor;
+
+in vec2 TexCoords;
+
+uniform sampler2D screenTexture;
+uniform vec2 screenTexture_size;
+
+vec4 FragGaussianHBlur(vec2 uv)
+{
+    vec2 texelSize = 1.0/screenTexture_size;
+    vec4 color = vec4(0, 0, 0, 0);
+
+    color += 0.40 * texture(screenTexture, uv);
+    color += 0.15 * texture(screenTexture, uv + texelSize * vec2(-1.0, 0.0));
+    color += 0.15 * texture(screenTexture, uv + texelSize * vec2(1.0, 0.0));
+    color += 0.10 * texture(screenTexture, uv + texelSize * vec2(-2.0, 0.0));
+    color += 0.10 * texture(screenTexture, uv + texelSize * vec2(2.0, 0.0));
+    color += 0.05 * texture(screenTexture, uv + texelSize * vec2(-3.0, 0.0));
+    color += 0.05 * texture(screenTexture, uv + texelSize * vec2(3.0, 0.0));
+
+    return color;
+}
+
+
+vec4 SampleBox13Tap(vec2 uv)
+{
+    vec2 texelSize = 2.0/screenTexture_size;
+    vec4 A = texture(screenTexture, uv + texelSize * vec2(-1.0, -1.0));
+    vec4 B = texture(screenTexture, uv + texelSize * vec2( 0.0, -1.0));
+    vec4 C = texture(screenTexture, uv + texelSize * vec2( 1.0, -1.0));
+    vec4 D = texture(screenTexture, uv + texelSize * vec2(-0.5, -0.5));
+    vec4 E = texture(screenTexture, uv + texelSize * vec2( 0.5, -0.5));
+    vec4 F = texture(screenTexture, uv + texelSize * vec2(-1.0,  0.0));
+    vec4 G = texture(screenTexture, uv                                );
+    vec4 H = texture(screenTexture, uv + texelSize * vec2( 1.0,  0.0));
+    vec4 I = texture(screenTexture, uv + texelSize * vec2(-0.5,  0.5));
+    vec4 J = texture(screenTexture, uv + texelSize * vec2( 0.5,  0.5));
+    vec4 K = texture(screenTexture, uv + texelSize * vec2(-1.0,  1.0));
+    vec4 L = texture(screenTexture, uv + texelSize * vec2( 0.0,  1.0));
+    vec4 M = texture(screenTexture, uv + texelSize * vec2( 1.0,  1.0));
+
+    vec2 div = (1.0 / 4.0) * vec2(0.5, 0.125);
+
+    vec4 o = (D + E + I + J) * div.x;
+    o += (A + B + G + F) * div.y;
+    o += (B + C + H + G) * div.y;
+    o += (F + G + L + K) * div.y;
+    o += (G + H + M + L) * div.y;
+
+    return o;
+};
+
+
+void main()
+{
+    vec3 col = SampleBox13Tap(TexCoords).rgb;
+    FragColor = vec4(col, 1.0f);
+} 

@@ -74,22 +74,21 @@ public:
 			return nullptr;
 		}
 
-		Texture *tex = new Texture();
-
-		glGenTextures(1, &(tex->ID));
-		glBindTexture(GL_TEXTURE_2D, tex->ID);
+		unsigned int textureID;
+		glGenTextures(1, &textureID);
+		glBindTexture(GL_TEXTURE_2D, textureID);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_R, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		int width1, height1, nChannels1;
+		int width, height, nChannels1;
 		stbi_set_flip_vertically_on_load(true); //invert y
-		unsigned char *data1 = stbi_load(path, &width1, &height1, &nChannels1, 0);
+		unsigned char *data1 = stbi_load(path, &width, &height, &nChannels1, 0);
 
 		if (data1 != NULL)
 		{
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width1, height1, 0, GL_RGB, GL_UNSIGNED_BYTE, data1);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data1);
 			glGenerateMipmap(GL_TEXTURE_2D);
 		}
 		else
@@ -100,6 +99,9 @@ public:
 		stbi_image_free(data1);
 
 		//manage
+		Texture *tex = new Texture();
+		tex->width = width;
+		tex->height = height;
 		textures[name] = tex;
 		return tex;
 	}
@@ -142,6 +144,8 @@ public:
 		//manage
 		Texture *tex = new Texture();
 		tex->ID = textureID;
+		tex->width = width;
+		tex->height = height;
 		textures[name] = tex;
 		return tex;
 	}
@@ -242,6 +246,7 @@ public:
 		{
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, textureColorbuffer);
 			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, msaaSample, GL_RGB16F, width, height, GL_TRUE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, textureColorbuffer, 0);
 		}
@@ -249,8 +254,9 @@ public:
 		{
 			glBindTexture(GL_TEXTURE_2D, textureColorbuffer);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	//must have
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //must have
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
@@ -258,6 +264,7 @@ public:
 		{
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, textureColorbuffer);
 			glTexImage2DMultisample(GL_TEXTURE_2D_MULTISAMPLE, 4, GL_RGB, width, height, GL_TRUE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, 0);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D_MULTISAMPLE, textureColorbuffer, 0);
 		}
@@ -267,6 +274,7 @@ public:
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //must have
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureColorbuffer, 0);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
@@ -301,6 +309,8 @@ public:
 		rt->framebuffer = framebuffer;
 		rt->textureColorbuffer = textureColorbuffer;
 		rt->rbo = rbo;
+		rt->width = width;
+		rt->height = height;
 		return rt;
 	}
 

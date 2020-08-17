@@ -68,7 +68,7 @@ void main()
 	//vec3 albedo = GammaToLinearSpace(texture(albedoTex, TexCoords).rgb);
 	//vec3 value = texture(metalicTex, TexCoords).rgb;
 	vec3 albedo = GammaToLinearSpace(outColor.rgb);
-	float metallic = 0;
+	float metallic = 0.5;
 	vec3 diffcolor = unity_ColorSpaceDielectricSpec.a*(1.0 - metallic)*albedo;
 	vec3 speccolor = mix(unity_ColorSpaceDielectricSpec.rgb, albedo, metallic);
 
