@@ -47,4 +47,15 @@ public:
 	void Render();
 };
 
+class EmiMaterial : public Material
+{
+public:
+	vec4 emissionColor;
+	float intensity;
+
+	EmiMaterial(ShaderClass* pshader);
+
+	void Render();
+};
+
 #endif

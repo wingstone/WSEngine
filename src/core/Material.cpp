@@ -50,3 +50,19 @@ void PBRMaterial::Render()
 	pshader->setFloat4("specularColor", specularColor);
 	pshader->setFloat("roughness", roughness);
 }
+
+
+EmiMaterial::EmiMaterial(ShaderClass* pshader): Material(pshader)
+{
+	emissionColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	intensity = 2.5f;
+}
+
+void EmiMaterial::Render()
+{
+	pshader->use();
+
+	//set color;
+	pshader->setFloat4("emissionColor", emissionColor);
+	pshader->setFloat("emissionIntensity", intensity);
+}

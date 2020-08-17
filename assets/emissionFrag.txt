@@ -1,0 +1,17 @@
+#version 330 core
+
+in vec4 outColor;
+in vec3 outPos;
+in vec3 outNormal;
+in vec2 TexCoords;
+
+uniform vec4 emissionColor;
+uniform float emissionIntensity;
+
+out vec4 fragcolor;
+
+void main()
+{
+	vec3 color = outColor.rgb * emissionColor.rgb * emissionIntensity;
+	fragcolor = vec4(color, 1.0f);
+}

@@ -20,14 +20,15 @@ struct UiPeremeters
 	bool oldcullback;
 
 	bool useToneMapping;
+	float autoExplosion;
 	bool useVignette;
 	float bloomThreshold;
+	RenderTexture *rt;
 
 	Transform *modelTrans;
 	Light *light;
 	vec4 ambientcolor;
-	RenderTexture *rt;
-	float autoExplosion;
+	EmiMaterial* emissionmat;
 };
 UiPeremeters gPeremeters;
 
@@ -48,7 +49,6 @@ void uicallback()
 	}
 
 	ImGui::Checkbox("Demo Window", &gPeremeters.show_demo_window);
-	
 
 	if (ImGui::CollapsingHeader("Render Setting"))
 	{
@@ -98,6 +98,7 @@ void uicallback()
 		RenderManager::Instance().SetAmbientColor(gPeremeters.ambientcolor);
 		ImGui::ColorEdit4("light color", (float *)&gPeremeters.light->lightColor);
 		ImGui::SliderFloat("light intensity", (float *)&gPeremeters.light->lightIntensity, 0.0f, 5.0f);
+		ImGui::SliderFloat("emission intensity", (float *)&gPeremeters.emissionmat->intensity, 0.0f, 5.0f);
 	}
 
 	if (ImGui::CollapsingHeader("Model Transform"))
@@ -125,10 +126,17 @@ int main()
 	//resource loading
 	vector<string> outnames;
 	vector<Mesh *> meshs = ResourcesManager::Instance().LoadMesh("../../assets/house.fbx", &outnames);
+	vector<Mesh *> lightmeshs = ResourcesManager::Instance().LoadMesh("../../assets/house_light.fbx", &outnames);
 	ShaderClass *shader = ResourcesManager::Instance().LoadShader("../../assets/pbrVert.txt", "../../assets/pbrFrag.txt", "pbr");
 	PBRMaterial *mat = ResourcesManager::Instance().CreateMaterial<PBRMaterial>(shader, "pbrmat");
 	// Texture *mask = ResourcesManager::Instance().LoadTexture("../../assets/mask.tga", "mask");
 	// mat->textures.push_back(mask);
+
+	vector<string> emissionoutnames;
+	vector<Mesh *> emissionmeshs = ResourcesManager::Instance().LoadMesh("../../assets/house_light.fbx", &emissionoutnames);
+	ShaderClass *emissionshader = ResourcesManager::Instance().LoadShader("../../assets/emissionVert.txt", "../../assets/emissionFrag.txt", "emission");
+	EmiMaterial *emissionmat = ResourcesManager::Instance().CreateMaterial<EmiMaterial>(emissionshader, "emissionmat");
+	emissionmat->intensity = 2.5f;
 
 	//mesh entity
 	Entity *monkey = EntityManager::Instance().CreateEntity();
@@ -136,10 +144,16 @@ int main()
 	meshRender->SetMaterial(mat);
 	meshRender->SetMesh(meshs[0]);
 
+	//emission mesh entity
+	Entity *emissionEntity = EntityManager::Instance().CreateEntity();
+	MeshRender *emissionmeshRender = emissionEntity->AddComponent<MeshRender>();
+	emissionmeshRender->SetMaterial(emissionmat);
+	emissionmeshRender->SetMesh(emissionmeshs[0]);
+
 	//light entity
 	Entity *sun = EntityManager::Instance().CreateEntity();
 	Light *lightcom = sun->AddComponent<Light>();
-	lightcom->lightIntensity = 0.7;
+	lightcom->lightIntensity = 0.8;
 
 	//gperameters setting
 	gPeremeters.show_demo_window = false;
@@ -155,11 +169,12 @@ int main()
 	gPeremeters.useVignette = true;
 	gPeremeters.bloomThreshold = 1.0f;
 
-	gPeremeters.ambientcolor = vec4(0.5, 0.5, 0.4, 1.0);
+	gPeremeters.ambientcolor = vec4(0.45, 0.5, 0.5, 1.0);
 	gPeremeters.autoExplosion = 1.0f;
 	gPeremeters.modelTrans = monkey->GetComponent<Transform>();
 	gPeremeters.light = sun->GetComponent<Light>();
 	gPeremeters.rt = RenderManager::Instance().GetRenderTexture();
+	gPeremeters.emissionmat = emissionmat;
 
 	engine.Run(uicallback);
 	cout << "complete run" << endl;
