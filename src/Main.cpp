@@ -14,10 +14,6 @@ struct UiPeremeters
 	bool useHDR;
 	bool useMSAA;
 	bool cullback;
-	bool oldDepthTest;
-	bool oldHDR;
-	bool oldMSAA;
-	bool oldcullback;
 
 	bool useToneMapping;
 	float autoExplosion;
@@ -28,7 +24,7 @@ struct UiPeremeters
 	Transform *modelTrans;
 	Light *light;
 	vec4 ambientcolor;
-	EmiMaterial* emissionmat;
+	EmiMaterial *emissionmat;
 };
 UiPeremeters gPeremeters;
 
@@ -52,40 +48,44 @@ void uicallback()
 
 	if (ImGui::CollapsingHeader("Render Setting"))
 	{
-		ImGui::Checkbox("Use Depth Test", &gPeremeters.useDepthTest);
-		if (gPeremeters.useDepthTest != gPeremeters.oldDepthTest)
+		if (ImGui::Checkbox("Use Depth Test", &gPeremeters.useDepthTest))
 		{
 			RenderManager::Instance().SetDepthTest(gPeremeters.useDepthTest);
-			gPeremeters.oldDepthTest = gPeremeters.useDepthTest;
 		}
-		ImGui::Checkbox("Use HDR", &gPeremeters.useHDR);
-		if (gPeremeters.useHDR != gPeremeters.oldHDR)
+		if (ImGui::Checkbox("Use HDR", &gPeremeters.useHDR))
 		{
 			RenderManager::Instance().SetHDR(gPeremeters.useHDR);
-			gPeremeters.oldHDR = gPeremeters.useHDR;
 		}
-		ImGui::Checkbox("Use MSAA", &gPeremeters.useMSAA);
-		if (gPeremeters.useMSAA != gPeremeters.oldMSAA)
+		if (ImGui::Checkbox("Use MSAA", &gPeremeters.useMSAA))
 		{
 			RenderManager::Instance().SetMSAA(gPeremeters.useMSAA);
-			gPeremeters.oldMSAA = gPeremeters.useMSAA;
 		}
-		ImGui::Checkbox("Cull Back", &gPeremeters.cullback);
-		RenderManager::Instance().SetCullBack(gPeremeters.cullback);
+		if (ImGui::Checkbox("Cull Back", &gPeremeters.cullback))
+		{
+			RenderManager::Instance().SetCullBack(gPeremeters.cullback);
+		}
 	}
 
 	if (ImGui::CollapsingHeader("Postprocess Setting"))
 	{
-		ImGui::Checkbox("Use Vignette", &gPeremeters.useVignette);
-		RenderManager::Instance().SetVignette(gPeremeters.useVignette);
+		if (ImGui::Checkbox("Use Vignette", &gPeremeters.useVignette))
+		{
+			RenderManager::Instance().SetVignette(gPeremeters.useVignette);
+		}
 
-		ImGui::Checkbox("Use ToneMapping", &gPeremeters.useToneMapping);
-		RenderManager::Instance().SetToneMapping(gPeremeters.useToneMapping);
-		ImGui::SliderFloat("Auto Explosioin", (float *)&gPeremeters.autoExplosion, 0.1f, 5.0f);
-		RenderManager::Instance().SetAutoExplosion(gPeremeters.autoExplosion);
+		if (ImGui::Checkbox("Use ToneMapping", &gPeremeters.useToneMapping))
+		{
+			RenderManager::Instance().SetToneMapping(gPeremeters.useToneMapping);
+		}
+		if (ImGui::SliderFloat("Auto Explosioin", (float *)&gPeremeters.autoExplosion, 0.1f, 5.0f))
+		{
+			RenderManager::Instance().SetAutoExplosion(gPeremeters.autoExplosion);
+		}
 
-		ImGui::SliderFloat("Bloom Threshold", (float *)&gPeremeters.bloomThreshold, 0.1f, 3.0f);
-		RenderManager::Instance().SetThreshold(gPeremeters.bloomThreshold);
+		if (ImGui::SliderFloat("Bloom Threshold", (float *)&gPeremeters.bloomThreshold, 0.1f, 3.0f))
+		{
+			RenderManager::Instance().SetThreshold(gPeremeters.bloomThreshold);
+		}
 	}
 
 	ImGui::Text("tmp RT");
@@ -94,8 +94,10 @@ void uicallback()
 
 	if (ImGui::CollapsingHeader("Light Setting"))
 	{
-		ImGui::ColorEdit4("ambient color", (float *)&gPeremeters.ambientcolor);
-		RenderManager::Instance().SetAmbientColor(gPeremeters.ambientcolor);
+		if (ImGui::ColorEdit4("ambient color", (float *)&gPeremeters.ambientcolor))
+		{
+			RenderManager::Instance().SetAmbientColor(gPeremeters.ambientcolor);
+		}
 		ImGui::ColorEdit4("light color", (float *)&gPeremeters.light->lightColor);
 		ImGui::SliderFloat("light intensity", (float *)&gPeremeters.light->lightIntensity, 0.0f, 5.0f);
 		ImGui::SliderFloat("emission intensity", (float *)&gPeremeters.emissionmat->intensity, 0.0f, 5.0f);
@@ -160,9 +162,6 @@ int main()
 	gPeremeters.useDepthTest = true;
 	gPeremeters.useHDR = true;
 	gPeremeters.useMSAA = true;
-	gPeremeters.oldDepthTest = true;
-	gPeremeters.oldHDR = true;
-	gPeremeters.oldMSAA = true;
 	gPeremeters.cullback = false;
 
 	gPeremeters.useToneMapping = true;

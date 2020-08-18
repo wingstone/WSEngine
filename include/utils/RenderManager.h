@@ -66,7 +66,7 @@ private:
 
 	RenderManager()
 	{
-		cullback = true;
+		cullback = false;
 		useDepthTest = true;
 		useMSAA = true;
 		msaaSample = 4;
@@ -189,12 +189,12 @@ public:
 		_clearColor = vec4(0.2f, 0.3f, 0.3f, 1.0f);
 
 		//skybox
-		vector<string> skypaths{"../../assets/skybox/right.jpg",
-								"../../assets/skybox/left.jpg",
-								"../../assets/skybox/top.jpg",
-								"../../assets/skybox/bottom.jpg",
-								"../../assets/skybox/front.jpg",
-								"../../assets/skybox/back.jpg"};
+		vector<string> skypaths{"../../assets/skybox/right.png",
+								"../../assets/skybox/left.png",
+								"../../assets/skybox/top.png",
+								"../../assets/skybox/bottom.png",
+								"../../assets/skybox/front.png",
+								"../../assets/skybox/back.png"};
 		skybox = ResourcesManager::Instance().LoadCubeTexture(skypaths, "skybox");
 		skyboxShader = ResourcesManager::Instance().LoadShader("../../assets/skyboxVert.txt", "../../assets/skyboxFrag.txt", "skybox");
 		vector<Vertex> skyboxverts;

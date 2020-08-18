@@ -8,5 +8,14 @@ uniform samplerCube skybox;
 void main()
 {
     vec3 col = texture(skybox, TexCoords).rgb;
+
+    //custom sky
+    vec3 bottom = vec3(0.2,0.2,0.3);
+    vec3 medium = vec3(0.4,0.4,0.45);
+    vec3 up = vec3(0.5,0.5,0.4);
+    col = medium;
+    col = mix(medium, bottom, abs(min(0,TexCoords.y)));
+    col = mix(col, up, max(0,TexCoords.y));
+
     FragColor = vec4(col, 1.0f);
 } 
