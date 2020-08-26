@@ -4,10 +4,7 @@ layout (location = 1 ) in vec4 color;
 layout (location = 2 ) in vec3 normal;
 layout (location = 3 ) in vec2 texcoord;
 
-out vec4 outColor;
-out vec3 outPos;
-out vec3 outNormal;
-out vec2 TexCoords;
+out vec4 NormalDepth;
 
 uniform mat4 model;
 uniform mat4 view;
@@ -17,15 +14,5 @@ void main()
 {
 	gl_Position = projection * view * model * vec4(vertex, 1.0f);
 
-	vec4 value = vec4(0.0,0.0,0.0,0.0);
-
-	TexCoords = texcoord;
-
-	outColor = color;
-
-	value = model*vec4(vertex,1.0);
-	outPos = value.xyz;
-
-	value = model*vec4(normal,0.0);
-	outNormal = normalize(value.xyz);
+	NormalDepth = vec4(normal.x, normal.y, normal.z, gl_Position.z/gl_Position.w);
 }

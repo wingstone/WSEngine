@@ -17,26 +17,24 @@ using namespace glm;
 
 class Transform;
 
-class MeshRender: public Component
+class MeshRender : public Component
 {
 
 public:
 	static const ComponentType TYPE = COMPONENT_RENDERER;
-	Transform* transform;
-	Mesh* mesh;
-	Material* material;
-	
+	Transform *transform;
+	Mesh *mesh;
+	Material *material;
+
 	ComponentType type() const;
 
 	MeshRender();
 
-	void SetMesh(Mesh* mesh);
+	void SetMesh(Mesh *mesh);
 
-	void SetMaterial(Material* material);
+	void SetMaterial(Material *material);
 
-	void DrawModel(Transform* transform, Camera* camera, Light *light, LightSetting * lightSetting);
-
+	void DrawModel(Transform *transform, Camera *camera, Light *light, LightSetting *lightSetting, RenderTexture *shadowMap = nullptr);
 };
-
 
 #endif

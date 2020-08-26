@@ -1,0 +1,11 @@
+#version 330 core
+out vec4 FragColor;
+
+in vec4 shadowCoord;
+
+void main()
+{
+    float z = shadowCoord.z/shadowCoord.w;
+    vec3 color = vec3(z,z,z);
+    FragColor = vec4(color, 1.0);
+} 

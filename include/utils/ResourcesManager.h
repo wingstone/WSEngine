@@ -190,7 +190,7 @@ public:
 			return nullptr;
 		}
 
-		ShaderClass *shader = new ShaderClass(vertContent, fragContent, false);
+		ShaderClass *shader = new ShaderClass(string(name), vertContent, fragContent, false);
 		shaders[name] = shader;
 		return shader;
 	}
@@ -204,7 +204,7 @@ public:
 			return nullptr;
 		}
 
-		ShaderClass *shader = new ShaderClass(vertFile, fragFile, true);
+		ShaderClass *shader = new ShaderClass(string(name), vertFile, fragFile, true);
 		shaders[name] = shader;
 		return shader;
 	}
@@ -231,7 +231,7 @@ public:
 		//check name
 		if (renderTextures.find("name") != renderTextures.end())
 		{
-			GlobalLog::Log("can't create material" + string(name));
+			GlobalLog::Log("can't create RenderTexture" + string(name));
 			return nullptr;
 		}
 		// framebuffer configuration
@@ -301,7 +301,8 @@ public:
 
 		// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-			cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
+			cout << "Framebuffer name:" << name << "\n"
+				 << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		RenderTexture *rt = new RenderTexture();
@@ -309,6 +310,50 @@ public:
 		rt->framebuffer = framebuffer;
 		rt->textureColorbuffer = textureColorbuffer;
 		rt->rbo = rbo;
+		rt->width = width;
+		rt->height = height;
+		return rt;
+	}
+
+	RenderTexture *CreateShadowMapRenderTexture(unsigned int width, unsigned int height, const char *name)
+	{
+		//check name
+		if (renderTextures.find("name") != renderTextures.end())
+		{
+			GlobalLog::Log("can't create RenderTexture" + string(name));
+			return nullptr;
+		}
+		// framebuffer configuration
+		// -------------------------
+		unsigned int framebuffer;
+		glGenFramebuffers(1, &framebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+
+		// create a color attachment texture
+		unsigned int shadowmapbuffer;
+		glGenTextures(1, &shadowmapbuffer);
+		glBindTexture(GL_TEXTURE_2D, shadowmapbuffer);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); //must have
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, shadowmapbuffer, 0);
+		glDrawBuffer(GL_NONE);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			cout << "Framebuffer name:" << name << "\n"
+				 << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << endl;
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		RenderTexture *rt = new RenderTexture();
+		renderTextures[name] = rt;
+		rt->framebuffer = framebuffer;
+		rt->textureColorbuffer = shadowmapbuffer;
+		rt->rbo = 0;
 		rt->width = width;
 		rt->height = height;
 		return rt;

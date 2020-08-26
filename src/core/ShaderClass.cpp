@@ -5,8 +5,9 @@ ShaderClass::ShaderClass()
 	ID = 0;
 }
 
-ShaderClass::ShaderClass(const GLchar *vertContent, const GLchar *fragContent, bool isFilePath)
+ShaderClass::ShaderClass(string name, const GLchar *vertContent, const GLchar *fragContent, bool isFilePath)
 {
+	this->name = name;
 	//¶ÁÈ¡shaderÎÄ¼ş
 	string vertexCode;
 	string fragmentCode;
@@ -59,7 +60,8 @@ ShaderClass::ShaderClass(const GLchar *vertContent, const GLchar *fragContent, b
 	if (!success)
 	{
 		glGetShaderInfoLog(vertexShader, 512, NULL, infolog);
-		cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+		cout << "Shader: " << name << "\n"
+			 << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
 			 << infolog << endl;
 	}
 
@@ -72,7 +74,8 @@ ShaderClass::ShaderClass(const GLchar *vertContent, const GLchar *fragContent, b
 	if (!success)
 	{
 		glGetShaderInfoLog(fragmentShader, 512, NULL, infolog);
-		cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+		cout << "Shader: " << name << "\n"
+			 << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
 			 << infolog << endl;
 	}
 
@@ -85,7 +88,8 @@ ShaderClass::ShaderClass(const GLchar *vertContent, const GLchar *fragContent, b
 	if (!success)
 	{
 		glGetShaderInfoLog(ID, 512, NULL, infolog);
-		cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+		cout << "Shader: " << name << "\n"
+			 << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
 			 << infolog << endl;
 	}
 	glDeleteShader(vertexShader);

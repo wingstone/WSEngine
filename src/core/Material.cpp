@@ -1,6 +1,6 @@
 #include <core/Material.h>
 
-void Material::ImportRenderSetting(Transform* transform, Camera* camera, Light* light, LightSetting* lightSetting)
+void Material::ImportRenderSetting(Transform *transform, Camera *camera, Light *light, LightSetting *lightSetting, RenderTexture *shadowMap)
 {
 	pshader->use();
 
@@ -12,10 +12,30 @@ void Material::ImportRenderSetting(Transform* transform, Camera* camera, Light* 
 	unsigned int projectionLoc = glGetUniformLocation(pshader->ID, "projection");
 	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(camera->GetProjectionMatrix()));
 
-	//light
+	//shadow
+	if (shadowMap != 0)
+	{
+		mat4 proj = light->GetShadowMatrix();
+		unsigned int shadowProjLoc = glGetUniformLocation(pshader->ID, "shadowProject");
+		glUniformMatrix4fv(shadowProjLoc, 1, GL_FALSE, value_ptr(proj));
+		pshader->setTexture("ShadowMap", shadowMap->textureColorbuffer, 0);
+		int width = shadowMap->width;
+		int height = shadowMap->height;
+		pshader->setFloat4("ShadowMap_TextureSize", vec4(width, height, 1.0f/width, 1.0f/height));
+	}
+	
 	pshader->setFloat4("cameraPos", vec4(camera->entity->GetComponent<Transform>()->position, 0.0f));
 
-	pshader->setFloat4("lightPos", light->lightPos);
+	vec3 lightdir = light->transform->Front();
+	//light
+	if (light->lighttype == Light::LightType::DIRECTIONAL)
+	{
+		pshader->setFloat4("lightPos", vec4(-lightdir, 0.0f));
+	}
+	else
+	{
+		pshader->setFloat4("lightPos", vec4(lightdir, 1.0f));
+	}
 	pshader->setFloat4("lightColor", light->lightColor);
 	pshader->setFloat("lightIntensity", light->lightIntensity);
 
@@ -23,9 +43,9 @@ void Material::ImportRenderSetting(Transform* transform, Camera* camera, Light* 
 	pshader->setFloat("ambientIntensity", lightSetting->ambientIntensity);
 }
 
-PBRMaterial::PBRMaterial(ShaderClass* pshader): Material(pshader)
+PBRMaterial::PBRMaterial(ShaderClass *pshader) : Material(pshader)
 {
-	this->textures = vector<Texture*>();
+	this->textures = vector<Texture *>();
 	this->strings = vector<string>();
 	strings.push_back("albedoTex");
 	strings.push_back("metalicTex");
@@ -35,14 +55,19 @@ PBRMaterial::PBRMaterial(ShaderClass* pshader): Material(pshader)
 	roughness = 0.7f;
 }
 
+void PBRMaterial::SetShadowMap(Texture *shadowmap)
+{
+	this->shadowmap = shadowmap;
+}
+
 void PBRMaterial::Render()
 {
 	pshader->use();
 	//set texture
-	unsigned int id = 0;
-	for (unsigned int i = 0; i <glm::min(textures.size(), strings.size()) ; i++)
+	unsigned int i = 0;
+	for (; i < glm::min(textures.size(), strings.size()); i++)
 	{
-		pshader->setTexture(strings[i], textures[i]->ID, i);
+		pshader->setTexture(strings[i], textures[i]->ID, i + 1);
 	}
 
 	//set color;
@@ -51,8 +76,7 @@ void PBRMaterial::Render()
 	pshader->setFloat("roughness", roughness);
 }
 
-
-EmiMaterial::EmiMaterial(ShaderClass* pshader): Material(pshader)
+EmiMaterial::EmiMaterial(ShaderClass *pshader) : Material(pshader)
 {
 	emissionColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	intensity = 2.5f;

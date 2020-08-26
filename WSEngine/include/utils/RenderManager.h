@@ -49,6 +49,10 @@ private:
 	ShaderClass *skyboxShader;
 	Mesh *skyboxMesh;
 
+	//shadow map
+	ShaderClass *shadowmapShader;
+	RenderTexture *shadowmapRT;
+
 	//post copy
 	ShaderClass *quadShader;
 	Mesh *quadMesh;
@@ -196,11 +200,15 @@ public:
 								"../../assets/skybox/front.png",
 								"../../assets/skybox/back.png"};
 		skybox = ResourcesManager::Instance().LoadCubeTexture(skypaths, "skybox");
-		skyboxShader = ResourcesManager::Instance().LoadShader("../../assets/skyboxVert.txt", "../../assets/skyboxFrag.txt", "skybox");
+		skyboxShader = ResourcesManager::Instance().LoadShader("../../assets/shader/skyboxVert.txt", "../../assets/shader/skyboxFrag.txt", "skybox");
 		vector<Vertex> skyboxverts;
 		vector<unsigned int> skyboxindes;
 		GeometryGenerator::GenerateSkyBox(skyboxverts, skyboxindes);
 		skyboxMesh = ResourcesManager::Instance().CreateMesh(skyboxverts, skyboxindes, "skybox");
+
+		//shadow map 
+		shadowmapShader = ResourcesManager::Instance().LoadShader("../../assets/shader/shadowmapVert.txt", "../../assets/shader/shadowmapFrag.txt", "shadowmap");
+		shadowmapRT = ResourcesManager::Instance().CreateShadowMapRenderTexture(2048, 2048, "shadowmap");
 
 		//defaultCamera
 		defaultCamera = EntityManager::Instance().CreateEntity();
@@ -210,7 +218,7 @@ public:
 		trans->rotation.y = 180.0f;
 
 		//postprocess copy
-		quadShader = ResourcesManager::Instance().LoadShader("../../assets/quadVert.txt", "../../assets/quadFrag.txt", "quad");
+		quadShader = ResourcesManager::Instance().LoadShader("../../assets/shader/quadVert.txt", "../../assets/shader/quadFrag.txt", "quad");
 		vector<Vertex> quadverts;
 		vector<unsigned int> quadindes;
 		GeometryGenerator::GenerateQuad(quadverts, quadindes);
@@ -219,10 +227,10 @@ public:
 		tempRenderTexture = ResourcesManager::Instance().CreateRenderTexture(1280, 720, "tmpRT", false, useHDR, false);
 
 		//postprocess bloom
-		preShader = ResourcesManager::Instance().LoadShader("../../assets/bloomVert.txt", "../../assets/bloomPreFrag.txt", "bloomPre");
-		blurHShader = ResourcesManager::Instance().LoadShader("../../assets/bloomVert.txt", "../../assets/bloomHBlurFrag.txt", "bloomHBlur");
-		blurVShader = ResourcesManager::Instance().LoadShader("../../assets/bloomVert.txt", "../../assets/bloomVBlurFrag.txt", "bloomVBlur");
-		mergeShader = ResourcesManager::Instance().LoadShader("../../assets/bloomVert.txt", "../../assets/bloomMergeFrag.txt", "bloomMerge");
+		preShader = ResourcesManager::Instance().LoadShader("../../assets/shader/bloomVert.txt", "../../assets/shader/bloomPreFrag.txt", "bloomPre");
+		blurHShader = ResourcesManager::Instance().LoadShader("../../assets/shader/bloomVert.txt", "../../assets/shader/bloomHBlurFrag.txt", "bloomHBlur");
+		blurVShader = ResourcesManager::Instance().LoadShader("../../assets/shader/bloomVert.txt", "../../assets/shader/bloomVBlurFrag.txt", "bloomVBlur");
+		mergeShader = ResourcesManager::Instance().LoadShader("../../assets/shader/bloomVert.txt", "../../assets/shader/bloomMergeFrag.txt", "bloomMerge");
 		blurRT = ResourcesManager::Instance().CreateRenderTexture(1280, 720, "blurquad", false, useHDR, false);
 		tempBlurRT = ResourcesManager::Instance().CreateRenderTexture(1280, 720, "tmpblurRT", false, useHDR, false);
 	}
@@ -385,7 +393,30 @@ public:
 			glDisable(GL_DEPTH_TEST);
 		}
 
-		//set framebuffer
+		//render shadow map
+		glViewport(0, 0, shadowmapRT->width, shadowmapRT->height);
+		glBindFramebuffer(GL_FRAMEBUFFER, shadowmapRT->framebuffer);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		shadowmapShader->use();
+		for (auto iter : renders)
+		{
+			Light *light = lights[0]->GetComponent<Light>();
+			MeshRender *render = iter->GetComponent<MeshRender>();
+			
+			//matrix
+			unsigned int modelLoc = glGetUniformLocation(shadowmapShader->ID, "model");
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(render->transform->GetModelMatrix()));
+			mat4 proj = light->GetShadowMatrix();
+
+			unsigned int projectionLoc = glGetUniformLocation(shadowmapShader->ID, "shadowProject");
+			glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(proj));
+
+			render->mesh->DrawMesh();
+		}
+
+		//set render framebuffer
+		glViewport(0, 0, renderTexture->width, renderTexture->height);
 		glBindFramebuffer(GL_FRAMEBUFFER, renderTexture->framebuffer);
 		glClearColor(_clearColor.x, _clearColor.y, _clearColor.z, _clearColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -396,22 +427,22 @@ public:
 			Camera *camera = defaultCamera->GetComponent<Camera>();
 			Light *light = lights[0]->GetComponent<Light>();
 			MeshRender *render = iter->GetComponent<MeshRender>();
-			render->DrawModel(render->transform, camera, light, &lightSetting);
+			render->DrawModel(render->transform, camera, light, &lightSetting, shadowmapRT);
 		}
 
-		//render for other Camera
-		for (auto camera : cameras)
-		{
-			Camera *renderCamera = defaultCamera->GetComponent<Camera>();
-			if (camera == defaultCamera)
-				continue;
-			for (auto iter : renders)
-			{
-				Light *light = lights[0]->GetComponent<Light>();
-				MeshRender *render = iter->GetComponent<MeshRender>();
-				render->DrawModel(render->transform, renderCamera, light, &lightSetting);
-			}
-		}
+		// //render for other Camera
+		// for (auto camera : cameras)
+		// {
+		// 	Camera *renderCamera = defaultCamera->GetComponent<Camera>();
+		// 	if (camera == defaultCamera)
+		// 		continue;
+		// 	for (auto iter : renders)
+		// 	{
+		// 		Light *light = lights[0]->GetComponent<Light>();
+		// 		MeshRender *render = iter->GetComponent<MeshRender>();
+		// 		render->DrawModel(render->transform, renderCamera, light, &lightSetting);
+		// 	}
+		// }
 
 		//render skybox
 		skyboxShader->use();
@@ -462,20 +493,6 @@ public:
 		blurVShader->use();
 		blurVShader->setTexture("screenTexture", tempBlurRT->textureColorbuffer, 0);
 		blurVShader->setFloat2("screenTexture_size", 1280/2, 720/2);
-		quadMesh->DrawMesh();
-
-		
-		//bloom blur1
-		glBindFramebuffer(GL_FRAMEBUFFER, tempBlurRT->framebuffer);
-		blurHShader->use();
-		blurHShader->setTexture("screenTexture", blurRT->textureColorbuffer, 0);
-		blurHShader->setFloat2("screenTexture_size", 1280/4, 720/4);
-		quadMesh->DrawMesh();
-		//bloom blur2
-		glBindFramebuffer(GL_FRAMEBUFFER, blurRT->framebuffer);
-		blurVShader->use();
-		blurVShader->setTexture("screenTexture", tempBlurRT->textureColorbuffer, 0);
-		blurVShader->setFloat2("screenTexture_size", 1280*4, 720*4);
 		quadMesh->DrawMesh();
 
 		//bloom merge

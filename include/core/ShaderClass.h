@@ -7,6 +7,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <string>
 
 using namespace std;
 using namespace glm;
@@ -16,7 +17,7 @@ class ShaderClass
 public:
 	ShaderClass();
 
-	ShaderClass(const GLchar* vertContent, const GLchar* fragContent, bool isFilePath);
+	ShaderClass(string name, const GLchar* vertContent, const GLchar* fragContent, bool isFilePath);
 
 	~ShaderClass();
 
@@ -39,6 +40,8 @@ public:
 	void setTexture(const string &name, unsigned int ID, unsigned int slot, bool isCube = false) const;
 
 	unsigned int ID;
+
+	string name;
 
 private:
 

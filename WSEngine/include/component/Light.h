@@ -16,10 +16,17 @@ using namespace glm;
 class Light: public Component
 {
 public:
+
+	enum LightType{
+		DIRECTIONAL,
+		POINT,
+		//SPOT
+	};
+
 	static const ComponentType TYPE = COMPONENT_LIGHT;
 	Transform* transform;
-	vec4 lightColor;	
-	vec4 lightPos;		//w = 0表示方向光，w = 1表示点光
+	vec4 lightColor;
+	LightType lighttype;
 	float lightIntensity;
 
 	ComponentType type() const
@@ -32,8 +39,16 @@ public:
 	{
 		transform = nullptr;
 		lightColor = vec4(1.0f);
-		lightPos = vec4(0.707f, 0.707f, 0.0f, 0.0f);
 		lightIntensity = 1;
+		lighttype = DIRECTIONAL;
+	}
+
+	mat4 GetShadowMatrix()
+	{
+		vec3 position = transform->position;
+		mat4 view = lookAtRH(position, position + transform->Front(), transform->Up());
+		mat4 proj = ortho(-4.0f, 4.0f,-4.0f, 4.0f, -3.0f, 3.0f);
+		return proj*view;
 	}
 };
 

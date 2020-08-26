@@ -118,68 +118,77 @@ void uicallback()
 
 int main()
 {
-	WSEngine engine;
-	if (!engine.Init())
+	try
 	{
-		return -1;
+		WSEngine engine;
+		if (!engine.Init())
+		{
+			return -1;
+		}
+		cout << "complete init" << endl;
+
+		//resource loading
+		vector<string> outnames;
+		vector<Mesh *> meshs = ResourcesManager::Instance().LoadMesh("../../assets/house.fbx", &outnames);
+		vector<Mesh *> lightmeshs = ResourcesManager::Instance().LoadMesh("../../assets/house_light.fbx", &outnames);
+		ShaderClass *shader = ResourcesManager::Instance().LoadShader("../../assets/shader/pbrVert.txt", "../../assets/shader/pbrFrag.txt", "pbr");
+		PBRMaterial *mat = ResourcesManager::Instance().CreateMaterial<PBRMaterial>(shader, "pbrmat");
+		// Texture *mask = ResourcesManager::Instance().LoadTexture("../../assets/mask.tga", "mask");
+		// mat->textures.push_back(mask);
+
+		vector<string> emissionoutnames;
+		vector<Mesh *> emissionmeshs = ResourcesManager::Instance().LoadMesh("../../assets/house_light.fbx", &emissionoutnames);
+		ShaderClass *emissionshader = ResourcesManager::Instance().LoadShader("../../assets/shader/emissionVert.txt", "../../assets/shader/emissionFrag.txt", "emission");
+		EmiMaterial *emissionmat = ResourcesManager::Instance().CreateMaterial<EmiMaterial>(emissionshader, "emissionmat");
+		emissionmat->intensity = 2.5f;
+
+		//mesh entity
+		Entity *monkey = EntityManager::Instance().CreateEntity();
+		MeshRender *meshRender = monkey->AddComponent<MeshRender>();
+		meshRender->SetMaterial(mat);
+		meshRender->SetMesh(meshs[0]);
+
+		//emission mesh entity
+		Entity *emissionEntity = EntityManager::Instance().CreateEntity();
+		MeshRender *emissionmeshRender = emissionEntity->AddComponent<MeshRender>();
+		emissionmeshRender->SetMaterial(emissionmat);
+		emissionmeshRender->SetMesh(emissionmeshs[0]);
+
+		//light entity
+		Entity *sun = EntityManager::Instance().CreateEntity();
+		Transform* lighttrans = sun->GetComponent<Transform>();
+		lighttrans->rotation = vec3(135.0f, 40.0f, 0.0f);
+		Light *lightcom = sun->AddComponent<Light>();
+		lightcom->lightIntensity = 0.8;
+
+		//gperameters setting
+		gPeremeters.show_demo_window = false;
+		gPeremeters.useDepthTest = true;
+		gPeremeters.useHDR = true;
+		gPeremeters.useMSAA = true;
+		gPeremeters.cullback = false;
+
+		gPeremeters.useToneMapping = true;
+		gPeremeters.useVignette = true;
+		gPeremeters.bloomThreshold = 1.0f;
+
+		gPeremeters.ambientcolor = vec4(0.45, 0.5, 0.5, 1.0);
+		gPeremeters.autoExplosion = 1.0f;
+		gPeremeters.modelTrans = monkey->GetComponent<Transform>();
+		gPeremeters.light = sun->GetComponent<Light>();
+		gPeremeters.rt = RenderManager::Instance().GetRenderTexture();
+		gPeremeters.emissionmat = emissionmat;
+
+		engine.Run(uicallback);
+		cout << "complete run" << endl;
+
+		engine.Quit();
+		cout << "complete quit" << endl;
 	}
-	cout << "complete init" << endl;
-
-	//resource loading
-	vector<string> outnames;
-	vector<Mesh *> meshs = ResourcesManager::Instance().LoadMesh("../../assets/house.fbx", &outnames);
-	vector<Mesh *> lightmeshs = ResourcesManager::Instance().LoadMesh("../../assets/house_light.fbx", &outnames);
-	ShaderClass *shader = ResourcesManager::Instance().LoadShader("../../assets/pbrVert.txt", "../../assets/pbrFrag.txt", "pbr");
-	PBRMaterial *mat = ResourcesManager::Instance().CreateMaterial<PBRMaterial>(shader, "pbrmat");
-	// Texture *mask = ResourcesManager::Instance().LoadTexture("../../assets/mask.tga", "mask");
-	// mat->textures.push_back(mask);
-
-	vector<string> emissionoutnames;
-	vector<Mesh *> emissionmeshs = ResourcesManager::Instance().LoadMesh("../../assets/house_light.fbx", &emissionoutnames);
-	ShaderClass *emissionshader = ResourcesManager::Instance().LoadShader("../../assets/emissionVert.txt", "../../assets/emissionFrag.txt", "emission");
-	EmiMaterial *emissionmat = ResourcesManager::Instance().CreateMaterial<EmiMaterial>(emissionshader, "emissionmat");
-	emissionmat->intensity = 2.5f;
-
-	//mesh entity
-	Entity *monkey = EntityManager::Instance().CreateEntity();
-	MeshRender *meshRender = monkey->AddComponent<MeshRender>();
-	meshRender->SetMaterial(mat);
-	meshRender->SetMesh(meshs[0]);
-
-	//emission mesh entity
-	Entity *emissionEntity = EntityManager::Instance().CreateEntity();
-	MeshRender *emissionmeshRender = emissionEntity->AddComponent<MeshRender>();
-	emissionmeshRender->SetMaterial(emissionmat);
-	emissionmeshRender->SetMesh(emissionmeshs[0]);
-
-	//light entity
-	Entity *sun = EntityManager::Instance().CreateEntity();
-	Light *lightcom = sun->AddComponent<Light>();
-	lightcom->lightIntensity = 0.8;
-
-	//gperameters setting
-	gPeremeters.show_demo_window = false;
-	gPeremeters.useDepthTest = true;
-	gPeremeters.useHDR = true;
-	gPeremeters.useMSAA = true;
-	gPeremeters.cullback = false;
-
-	gPeremeters.useToneMapping = true;
-	gPeremeters.useVignette = true;
-	gPeremeters.bloomThreshold = 1.0f;
-
-	gPeremeters.ambientcolor = vec4(0.45, 0.5, 0.5, 1.0);
-	gPeremeters.autoExplosion = 1.0f;
-	gPeremeters.modelTrans = monkey->GetComponent<Transform>();
-	gPeremeters.light = sun->GetComponent<Light>();
-	gPeremeters.rt = RenderManager::Instance().GetRenderTexture();
-	gPeremeters.emissionmat = emissionmat;
-
-	engine.Run(uicallback);
-	cout << "complete run" << endl;
-
-	engine.Quit();
-	cout << "complete quit" << endl;
+	catch(exception e)
+	{
+		GlobalLog::Log(e.what());
+	}
 
 	return 0;
 }

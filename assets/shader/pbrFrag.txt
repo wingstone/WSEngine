@@ -4,6 +4,7 @@ in vec4 outColor;
 in vec3 outPos;
 in vec3 outNormal;
 in vec2 TexCoords;
+in vec4 shadowCoords;
 
 uniform vec4 ambientColor;
 uniform float ambientIntensity;
@@ -18,9 +19,12 @@ uniform vec4 diffuseColor;
 uniform vec4 specularColor;
 uniform float roughness;
 
+uniform sampler2D ShadowMap;
+uniform vec4 ShadowMap_TextureSize;
 uniform sampler2D albedoTex;
 //uniform sampler2D metalicTex;
 //uniform sampler2D normalTex;
+
 
 out vec4 fragcolor;
 
@@ -63,6 +67,20 @@ float SmithJointGGXVisibilityTerm (float NdotL, float NdotV, float roughness)
     return 0.5f / (lambdaV + lambdaL + 1e-5f); 
 };
 
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453)*2-1;
+}
+
+float GetPCFShadow(vec2 texcoord, float depth)
+{
+	float shadow = 0;
+	for(int i = 0; i < 9; i++)
+	{
+		shadow += step(texture(ShadowMap, texcoord + 0.5*ShadowMap_TextureSize.zw * rand(gl_FragCoord.xy)).r + 0.001, depth);
+	}
+	return shadow/9;
+}
+
 void main()
 {
 	//vec3 albedo = GammaToLinearSpace(texture(albedoTex, TexCoords).rgb);
@@ -78,6 +96,10 @@ void main()
 	//vec3 speccolor = GammaToLinearSpace(specularColor.rgb);
 	vec3 lightcolor = GammaToLinearSpace(lightColor.rgb*lightIntensity);
 
+	//atten
+	vec3 shadow = shadowCoords.xyz/shadowCoords.w*0.5+0.5;
+	float atten = 1 - GetPCFShadow(shadow.xy, shadow.z);
+	lightcolor *= atten;
 
 	vec3 L = normalize(lightPos.xyz);
 	vec3 N = normalize(outNormal);

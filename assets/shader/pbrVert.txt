@@ -1,0 +1,35 @@
+#version 330 core
+layout (location = 0 ) in vec3 vertex;
+layout (location = 1 ) in vec4 color;
+layout (location = 2 ) in vec3 normal;
+layout (location = 3 ) in vec2 texcoord;
+
+out vec4 outColor;
+out vec3 outPos;
+out vec3 outNormal;
+out vec2 TexCoords;
+out vec4 shadowCoords;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+uniform mat4 shadowProject;
+
+void main()
+{
+	gl_Position = projection * view * model * vec4(vertex, 1.0f);
+
+	vec4 value = vec4(0.0,0.0,0.0,0.0);
+
+	TexCoords = texcoord;
+
+	outColor = color;
+
+	value = model*vec4(vertex,1.0);
+	outPos = value.xyz;
+
+	value = model*vec4(normal,0.0);
+	outNormal = normalize(value.xyz);
+
+	shadowCoords =  shadowProject * model * vec4(vertex, 1.0f);
+}

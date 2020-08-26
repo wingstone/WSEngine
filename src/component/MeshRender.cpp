@@ -12,19 +12,19 @@ MeshRender::MeshRender()
 	material = nullptr;
 }
 
-void MeshRender::SetMesh(Mesh* mesh)
+void MeshRender::SetMesh(Mesh *mesh)
 {
 	this->mesh = mesh;
 }
 
-void MeshRender::SetMaterial(Material* material)
+void MeshRender::SetMaterial(Material *material)
 {
 	this->material = material;
 }
 
-void MeshRender::DrawModel(Transform* transform, Camera* camera, Light* light, LightSetting* lightSetting)
+void MeshRender::DrawModel(Transform *transform, Camera *camera, Light *light, LightSetting *lightSetting, RenderTexture *shadowMap)
 {
-	material->ImportRenderSetting(transform, camera, light, lightSetting);
+	material->ImportRenderSetting(transform, camera, light, lightSetting, shadowMap);
 	material->Render();
 
 	mesh->DrawMesh();
